@@ -181,6 +181,8 @@ class NameEntityRecognition:
         new_per = []
         for p in per:
             try:
+                if p == 'm' or p == 't':
+                    continue
                 pp = config.blacklist_person_obj.sub(u'', p)
                 pp = pp.strip()
                 if pp == u'':
