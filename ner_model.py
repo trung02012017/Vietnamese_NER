@@ -11,78 +11,28 @@ import pickle as pkl
 
 from regex import Regex
 from Utils import Utils
-from gen_data import DataGenerator
 
-from os.path import join, dirname
+from os.path import join
 from datetime import datetime
 from vncorenlp import VnCoreNLP
 from underthesea import sent_tokenize
 
-from sklearn.externals import joblib
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed, Activation, Bidirectional, Masking
 from tensorflow.keras.models import save_model, load_model
 from tensorflow.keras.models import model_from_json
-# from tensorflow.keras.layers import CRF
+
+import config
 
 
-ID_WORD = 0
-ID_POS = 1
-ID_CHUNK = 2
-ID_TAG = 3
+ID_WORD_EMBEDDING = 0
+ID_POST_ID = 1
+ID_CHUNK_ID = 2
+ID_TAG_ID = 3
 
 
-def building_ner(num_lstm_layer, num_hidden_node, dropout,
-                 time_step, vector_length, num_labels):
-    model = Sequential()
-
-    model.add(Masking(mask_value=0., input_shape=(time_step, vector_length)))
-    for i in range(num_lstm_layer-1):
-        model.add(Bidirectional(LSTM(units=num_hidden_node, return_sequences=True,
-                                     dropout=dropout, recurrent_dropout=dropout)))
-    model.add(Bidirectional(LSTM(units=num_hidden_node, return_sequences=True,
-                                 dropout=dropout, recurrent_dropout=dropout),
-                            merge_mode='concat'))
-    # crf = CRF(output_lenght, sparse_target=False, name='CRF')
-    # model.add(crf)
-    # model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
-    model.add(TimeDistributed(Dense(num_labels)))
-    model.add(Activation('softmax'))
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-    return model
-
-
-def get_pre_data(utils: Utils):
-
-    print('Loading data...')
-    train_data, valid_data, test_data = utils.create_data(train_dir, dev_dir, test_dir)
-
-    # self.utils.mkdir('model')
-    # self.save_data(input_train, output_train, input_dev, output_dev, input_test, output_test)
-    # joblib.dump(self.utils, 'model/utils.pkl')
-
-    return train_data, valid_data, test_data
-
-
-def get_test_data(test_data, utils: Utils):
-    word_list = test_data[ID_WORD]
-    pos_list = test_data[ID_POS]
-    chunk_list = test_data[ID_CHUNK]
-    tag_list = test_data[ID_TAG]
-
-    word_tensor, pos_tensor, chunk_tensor, tag_tensor = utils.create_vector_data(word_list,
-                                                                                 pos_list,
-                                                                                 chunk_list,
-                                                                                 tag_list)
-    input_test = np.concatenate((word_tensor, pos_tensor, chunk_tensor), axis=2)
-    output_test = tag_tensor
-
-    return input_test, output_test
-
-
-def load_pos_chunk(data_path=join(dirname(__file__), "model/data")):
+def load_pos_chunk(data_path):
     pos_path = os.path.join(data_path, "pos_data.pkl")
     chunk_path = os.path.join(data_path, "chunk_data.pkl")
 
@@ -94,89 +44,151 @@ def load_pos_chunk(data_path=join(dirname(__file__), "model/data")):
     return pos_data, chunk_data
 
 
-class Network:
-    def __init__(self, num_lstm_layers, num_hidden_nodes, dropout, time_step, vector_length, num_labels):
-        self.num_lstm_layers = num_lstm_layers
-        self.num_hidden_nodes = num_hidden_nodes
-        self.dropout = dropout
-        self.time_step = time_step
-        self.vector_length = vector_length
-        self.num_labels = num_labels
-
-    def build_model(self):
-        model = Sequential()
-        model.add(Masking(mask_value=0., input_shape=(self.time_step, self.vector_length)))
-        for i in range(num_lstm_layer - 1):
-            model.add(Bidirectional(LSTM(units=self.num_hidden_nodes, return_sequences=True,
-                                         dropout=self.dropout, recurrent_dropout=self.dropout)))
-        model.add(Bidirectional(LSTM(units=self.num_hidden_nodes, return_sequences=True,
-                                     dropout=self.dropout, recurrent_dropout=self.dropout),
-                                merge_mode='concat'))
-        # crf = CRF(output_lenght, sparse_target=False, name='CRF')
-        # model.add(crf)
-        # model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
-        model.add(TimeDistributed(Dense(self.num_labels)))
-        model.add(Activation('softmax'))
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-        return model
-
-
 class NameEntityRecognition:
-    def __init__(self):
+    def __init__(self, model_path, words_path, embedding_vectors_path, tag_path, data_path):
         self.preprocessor = VnCoreNLP(address="http://127.0.0.1", port=9000)
         self.model = None
-        self.utils = Utils(word_dir, vector_dir)
-        self.r = Regex()
+        self.load_model(model_path)
+        self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))
+        self.re = Regex()
 
-    def build_model(self, num_lstm_layer, num_hidden_node, dropout, batch_size, patience):
+    def predict(self, data, json_format=False):
+        try:
+            data = str(data)
+        except:
+            data = str(data, encoding='utf-8')
+        data = unicodedata.normalize('NFKC', data)
+        pre_process_data = self.preprocessor.annotate(data)
+        sentences = pre_process_data['sentences']
+        word_list = []
+        word_list_raw = []
+        pos_list = []
+        chunk_list = []
+        for i, sen in enumerate(sentences):
+            word_raw = [w['form'] for w in sen]
+            pos_tag = [w['posTag'] for w in sen]
+            words = list(map(lambda w: self.re.map_word_label(w), word_raw))
+            chunks = list(map(lambda w: self.re.run_ex(w), words))
+            word_list.append(words)
+            word_list_raw.append(word_raw)
+            pos_list.append(pos_tag)
+            chunk_list.append(chunks)
 
-        startTime = datetime.now()
+        pos_id_list, alphabet_pos = self.utils.map_string_2_id_open(pos_list, 'pos')
+        chunk_id_list, alphabet_chunk = self.utils.map_string_2_id_open(chunk_list, 'chunk')
+        X = self.utils.create_vector_data_ex(word_list, pos_id_list, chunk_id_list)
 
-        train_data, valid_data, test_data = get_pre_data(self.utils)
-        train_gen = DataGenerator(train_data, self.utils, batch_size=batch_size)
-        valid_gen = get_test_data(valid_data, utils=self.utils)
+        labels = self.model.predict_classes(X)
+        print(labels)
 
-        print('Building model...')
-        time_step = self.utils.max_length
+        result = []
+        for i in range(len(word_list_raw)):
+            sen = []
+            for j in range(len(word_list_raw[i])):
+                label = self.utils.alphabet_tag.get_instance(labels[i][j])
+                if label == None:
+                    label = self.utils.alphabet_tag.get_instance(labels[i][j] + 1)
+                if label == None:
+                    raise ValueError('labels %s not define' % (labels[i][j]))
+                sen.append((word_list_raw[i][j], label))
+            result.append(sen)
 
-        input_length = self.utils.embedd_vectors.shape[1] + self.utils.alphabet_pos.size() + \
-                       self.utils.alphabet_chunk.size()
-        output_length = self.utils.alphabet_tag.size()
+        result = self.get_final_result(result)
+        if json_format:
+            return self.get_json_response(result)
+        else:
+            return result
 
-        self.network = Network(num_lstm_layer, num_hidden_node,
-                               dropout, time_step, input_length,
-                               output_length)
-        self.model = self.network.build_model()
-        print('Model summary...')
-        print(self.model.summary())
+    def get_final_result(self, data):
+        result = []
+        for sen in data:
+            s = []
+            B_not_end = False
+            previous_tag = None
+            for i, w in enumerate(sen):
+                if u'B-' in w[1]:
+                    tag = w[1].split(u'-')[1]
+                    if B_not_end:
+                        s.append(u'</' + tag + u'>')
+                    s.append(u'<' + tag + u'>')
+                    s.append(w[0])
+                    if i == len(sen) - 1:
+                        s.append(u'</' + tag + u'>')
+                    B_not_end = True
+                    previous_tag = tag
+                elif u'I-' in w[1] and i < len(sen) - 1 and sen[i+1][1] != w[1]:
+                    s.append(w[0])
+                    tag = w[1].split(u'-')[1]
+                    if tag != previous_tag and previous_tag is not None:
+                        s.append(u'</' + previous_tag + u'>')
+                    else:
+                        s.append(u'</' + tag + u'>')
+                    if B_not_end:
+                        B_not_end = False
+                        previous_tag = None
+                elif u'I-' in w[1] and i == len(sen) - 1:
+                    s.append(w[0])
+                    tag = w[1].split(u'-')[1]
+                    if tag != previous_tag and previous_tag is not None:
+                        s.append(u'</' + previous_tag + u'>')
+                    else:
+                        s.append(u'</' + tag + u'>')
+                    if B_not_end:
+                        B_not_end = False
+                        previous_tag = None
+                else:
+                    if i != 0 and u'B-' in sen[i-1][1] and u'I-' not in w[1]:
+                        tag = sen[i-1][1].split(u'-')[1]
+                        s.append(u'</' + tag + u'>')
+                        if B_not_end:
+                            B_not_end = False
+                            previous_tag = None
+                    s.append(w[0])
+            result.append(u' '.join(s))
+        return u'\n'.join(result)
 
-        print('Training model...')
-        early_stopping = EarlyStopping(patience=patience)
-        ckpt = tf.keras.callbacks.ModelCheckpoint('ckpt/ner.ckpt',
-                                                  # save_weights_only=True,
-                                                  save_best_only=True,
-                                                  save_freq='epoch',
-                                                  verbose=1
-                                                  )
+    def get_json_response(self, data):
+        per = []; loc = []; org = []; ner = []
+        begin_per = False; begin_loc = False; begin_org = False
+        for w in data.replace(u'_', u' ').split():
+            if w == u'<PER>':
+                begin_per = True
+            elif w == u'<LOC>':
+                begin_loc = True
+            elif w == u'<ORG>':
+                begin_org = True
+            elif w == u'</PER>':
+                begin_per = False
+                per.append(u' '.join(ner))
+                ner = ner[:0]
+            elif w == u'</LOC>':
+                begin_loc = False
+                loc.append(u' '.join(ner))
+                ner = ner[:0]
+            elif w == u'</ORG>':
+                begin_org = False
+                org.append(u' '.join(ner))
+                ner = ner[:0]
+            else:
+                if begin_per or begin_loc or begin_org:
+                    ner.append(w.replace(u'.', u'').replace(u',', u'').replace(u'!', u''))
+                else:
+                    continue
+        per = self.remove_blacklist_person(per)
+        return {u'result':{u'per':per, u'loc':loc, u'org':org}}
 
-        tensorboard = tf.keras.callbacks.TensorBoard(log_dir="logs", update_freq="batch")
-
-        self.model.fit_generator(generator=train_gen,
-                                 validation_data=valid_gen,
-                                 epochs=100,
-                                 max_queue_size=100,
-                                 callbacks=[early_stopping, ckpt, tensorboard])
-
-        self.model.save('model/ner_model')
-        endTime = datetime.now()
-        print("Running time: ")
-        print(endTime - startTime)
-
-        print("Start testing")
-        x_test, y_test = get_test_data(test_data, utils=self.utils)
-        test_loss, test_acc = self.model.evaluate(x_test, y_test)
-        print(f"Result on test data: test loss {test_loss}, test_accuracy {test_acc}")
+    def remove_blacklist_person(self, per):
+        new_per = []
+        for p in per:
+            try:
+                pp = config.blacklist_person_obj.sub(u'', p)
+                pp = pp.strip()
+                if pp == u'':
+                    continue
+                new_per.append(pp)
+            except:
+                new_per.append(pp)
+        return new_per
 
     def load_model(self, model_path):
         print('loading %s ...' % (model_path))
@@ -187,20 +199,14 @@ class NameEntityRecognition:
 
 
 if __name__ == '__main__':
+    from os.path import join, dirname
 
-    from os.path import join, dirname, abspath
+    ner_model_path = join(dirname(__file__), "model/ner_model")
+    words_path = join(dirname(__file__), "model/data/words.pl")
+    embed_words_path = join(dirname(__file__), "model/data/vectors.npy")
+    tag_path = join(dirname(__file__), "model/data/tag_data.pkl")
+    data_path = join(dirname(__file__), "model/data")
 
-    word_dir = join(dirname(abspath(__file__)), "data/words.pl")
-    vector_dir = join(dirname(abspath(__file__)), "data/vectors.npy")
-    train_dir = join(dirname(abspath(__file__)), "data/newz/normalize_data/train_data.txt")
-    dev_dir = join(dirname(abspath(__file__)), "data/newz/normalize_data/val_data.txt")
-    test_dir = join(dirname(abspath(__file__)), "data/newz/normalize_data/test_data.txt")
-    num_lstm_layer = 2
-    num_hidden_node = 128
-    dropout = 0.5
-    batch_size = 64
-    patience = 3
-
-    n = NameEntityRecognition()
-    n.build_model(num_lstm_layer, num_hidden_node, dropout, batch_size, patience)
-
+    params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
+    ner = NameEntityRecognition(*params)
+    print(ner.predict(u'bố m là công sơn', json_format=True))

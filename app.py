@@ -1,7 +1,9 @@
 from os.path import join, dirname
 from ner_model import NameEntityRecognition
 
-from flask import Flask, jsonify, render_template, request, url_for
+from flask import Flask, jsonify, render_template, request, url_for, Response
+
+import json
 
 app = Flask(__name__)
 
@@ -17,11 +19,25 @@ ner = NameEntityRecognition(*params)
 
 @app.route('/name_entity', methods=['GET', 'POST'])
 def get_name_entity():
+    global ner
     if request.method == 'POST':
         data = request.get_json()
         sentences = data["paragraph"]
         result = ner.predict(sentences)
         return {"result": result}
+
+
+@app.route('/ner_extra', methods=['POST'])
+def process_request_ex():
+    global ner
+    try:
+        data = request.data
+        data = json.loads(data)
+    except:
+        return Response(response='Bad request', status=400)
+    print(u'Input:\n%s' % (data))
+    result = ner.predict(data['data'], json_format=True)
+    return jsonify(result)
 
 
 if __name__ == '__main__':

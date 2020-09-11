@@ -4,13 +4,12 @@ import os
 import numpy as np
 import pickle as pkl
 
-from os.path import join, dirname
 from Alphabet import Alphabet
 from regex import Regex
 
 
 class Utils:
-    def __init__(self, word_dir, vector_dir, alphabet_pos=None, alphabet_chunk=None):
+    def __init__(self, word_dir, vector_dir, tag_dir, alphabet_pos=None, alphabet_chunk=None):
 
         # load pre-train word2vec
         self.embedd_vectors = np.load(vector_dir)
@@ -22,7 +21,7 @@ class Utils:
         self.max_length = 37
         self.alphabet_pos = alphabet_pos
         self.alphabet_chunk = alphabet_chunk
-        self.alphabet_tag = None
+        self.alphabet_tag = pkl.load(open(tag_dir, "rb"))
         self.r = Regex()
 
     def read_conll_format(self, input_file):
@@ -154,8 +153,8 @@ class Utils:
                            tag_id_list):
 
         word_tensor = self.construct_tensor_word(word_list, self.unknown_embedd,
-                                                 self.embedd_words, self.embedd_vectors,
-                                                 self.embedd_dim, self.max_length)
+                                                self.embedd_words, self.embedd_vectors,
+                                                self.embedd_dim, self.max_length)
 
         # categorical pos tag
         dim_pos = self.alphabet_pos.size()
@@ -224,17 +223,29 @@ class Utils:
         print("%%%%%%%%%%%%%%%%%%")
         print("Done preparing data")
 
-        train_data = (word_list_train, pos_id_list_train, chunk_id_list_train, tag_id_list_train)
+        train_data = self.create_vector_data(
+            word_list_train,
+            pos_id_list_train,
+            chunk_id_list_train,
+            tag_id_list_train)
 
-        valid_data = (word_list_val, pos_id_list_val, chunk_id_list_val, tag_id_list_val)
+        valid_data = self.create_vector_data(
+            word_list_val,
+            pos_id_list_val,
+            chunk_id_list_val,
+            tag_id_list_val)
 
-        test_data = (word_list_test, pos_id_list_test, chunk_id_list_test, tag_id_list_test)
+        test_data = self.create_vector_data(
+            word_list_test,
+            pos_id_list_test,
+            chunk_id_list_test,
+            tag_id_list_test)
 
         self.save_data()
 
         return train_data, valid_data, test_data
 
-    def save_data(self, data_model_path=join(dirname(__file__), "model/data")):
+    def save_data(self, data_model_path="/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/model/data"):
 
         alphabet_pos_path = os.path.join(data_model_path, "pos_data.pkl")
         alphabet_chunk_path = os.path.join(data_model_path, "chunk_data.pkl")
@@ -252,7 +263,7 @@ class Utils:
             pkl.dump(self.alphabet_tag, fp)
             fp.close()
 
-    def check_data_save(self, data_model_path=join(dirname(__file__), "model/data")):
+    def check_data_save(self, data_model_path="/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/model/data"):
         if os.path.isdir(data_model_path) and os.listdir(data_model_path) == 3:
             return True
         else:
@@ -299,4 +310,28 @@ class Utils:
     def mkdir(self, dir):
         if (os.path.exists(dir) == False):
             os.mkdir(dir)
+
+
+if __name__ == "__main__":
+    u = Utils()
+
+    words_path = "/home/trungtq/Documents/NER/data/words.pl"
+    embedding_vectors_path = "/home/trungtq/Documents/NER/data/vectors.npy"
+    train_path = "/home/trungtq/Documents/NER/data/new/small_data/train_sample.txt"
+    val_path = "/home/trungtq/Documents/NER/data/new/small_data/val_sample.txt"
+    test_path = "/home/trungtq/Documents/NER/data/new/small_data/test_sample.txt"
+
+    train_data, valid_data, test_data = u.create_data(words_path,
+                                                      embedding_vectors_path,
+                                                      train_path, val_path,
+                                                      test_path)
+
+    print(len(train_data), len(valid_data), len(test_data))
+
+    ID_WORD_EMBEDDING = 0
+    ID_POST_ID = 1
+    ID_CHUNK_ID = 2
+    ID_TAG_ID = 3
+
+    print(train_data[ID_WORD_EMBEDDING].shape, train_data[ID_POST_ID].shape, train_data[ID_CHUNK_ID].shape)
 
