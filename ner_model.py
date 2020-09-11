@@ -124,7 +124,6 @@ class Network:
 
 class NameEntityRecognition:
     def __init__(self):
-        self.preprocessor = VnCoreNLP(address="http://127.0.0.1", port=9000)
         self.model = None
         self.utils = Utils(word_dir, vector_dir)
         self.r = Regex()
