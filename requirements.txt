@@ -1,0 +1,5 @@
+vncorenlp==1.0.3
+underthesea==1.1.17
+numpy==1.18.1
+Flask==1.1.2
+tensorflow==2.3.0
