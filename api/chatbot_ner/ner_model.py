@@ -48,9 +48,9 @@ class NameEntityRecognition:
         self.model = None
         self.load_model(model_path)
         self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))
-        self.r = Regex()
+        self.re = Regex()
 
-    def predict(self, data):
+    def predict(self, data, json_format=False):
         try:
             data = str(data)
         except:
@@ -65,8 +65,8 @@ class NameEntityRecognition:
         for i, sen in enumerate(sentences):
             word_raw = [w['form'] for w in sen]
             pos_tag = [w['posTag'] for w in sen]
-            words = list(map(lambda w: self.r.map_word_label(w), word_raw))
-            chunks = list(map(lambda w: self.r.run_ex(w), words))
+            words = list(map(lambda w: self.re.map_word_label(w), word_raw))
+            chunks = list(map(lambda w: self.re.run_ex(w), words))
             word_list.append(words)
             word_list_raw.append(word_raw)
             pos_list.append(pos_tag)
@@ -91,40 +91,102 @@ class NameEntityRecognition:
                 sen.append((word_list_raw[i][j], label))
             result.append(sen)
 
-        return self.get_final_result(result)
+        result = self.get_final_result(result)
+        if json_format:
+            return self.get_json_response(result)
+        else:
+            return result
 
     def get_final_result(self, data):
         result = []
         for sen in data:
             s = []
             B_not_end = False
+            previous_tag = None
             for i, w in enumerate(sen):
                 if u'B-' in w[1]:
+                    tag = w[1].split(u'-')[1]
                     if B_not_end:
-                        s.append(u'</' + w[1].split(u'-')[1] + u'>')
-                    s.append(u'<' + w[1].split(u'-')[1] + u'>')
+                        s.append(u'</' + tag + u'>')
+                    s.append(u'<' + tag + u'>')
                     s.append(w[0])
                     if i == len(sen) - 1:
-                        s.append(u'</' + w[1].split(u'-')[1] + u'>')
+                        s.append(u'</' + tag + u'>')
                     B_not_end = True
+                    previous_tag = tag
                 elif u'I-' in w[1] and i < len(sen) - 1 and sen[i+1][1] != w[1]:
                     s.append(w[0])
-                    s.append(u'</' + w[1].split(u'-')[1] + u'>')
+                    tag = w[1].split(u'-')[1]
+                    if tag != previous_tag and previous_tag is not None:
+                        s.append(u'</' + previous_tag + u'>')
+                    else:
+                        s.append(u'</' + tag + u'>')
                     if B_not_end:
                         B_not_end = False
+                        previous_tag = None
                 elif u'I-' in w[1] and i == len(sen) - 1:
                     s.append(w[0])
-                    s.append(u'</' + w[1].split(u'-')[1] + u'>')
+                    tag = w[1].split(u'-')[1]
+                    if tag != previous_tag and previous_tag is not None:
+                        s.append(u'</' + previous_tag + u'>')
+                    else:
+                        s.append(u'</' + tag + u'>')
                     if B_not_end:
                         B_not_end = False
+                        previous_tag = None
                 else:
                     if i != 0 and u'B-' in sen[i-1][1] and u'I-' not in w[1]:
-                        s.append(u'</' + sen[i-1][1].split(u'-')[1] + u'>')
+                        tag = sen[i-1][1].split(u'-')[1]
+                        s.append(u'</' + tag + u'>')
                         if B_not_end:
                             B_not_end = False
+                            previous_tag = None
                     s.append(w[0])
             result.append(u' '.join(s))
         return u'\n'.join(result)
+
+    def get_json_response(self, data):
+        per = []; loc = []; org = []; ner = []
+        begin_per = False; begin_loc = False; begin_org = False
+        for w in data.replace(u'_', u' ').split():
+            if w == u'<PER>':
+                begin_per = True
+            elif w == u'<LOC>':
+                begin_loc = True
+            elif w == u'<ORG>':
+                begin_org = True
+            elif w == u'</PER>':
+                begin_per = False
+                per.append(u' '.join(ner))
+                ner = ner[:0]
+            elif w == u'</LOC>':
+                begin_loc = False
+                loc.append(u' '.join(ner))
+                ner = ner[:0]
+            elif w == u'</ORG>':
+                begin_org = False
+                org.append(u' '.join(ner))
+                ner = ner[:0]
+            else:
+                if begin_per or begin_loc or begin_org:
+                    ner.append(w.replace(u'.', u'').replace(u',', u'').replace(u'!', u''))
+                else:
+                    continue
+        per = self.remove_blacklist_person(per)
+        return {u'result':{u'per':per, u'loc':loc, u'org':org}}
+
+    def remove_blacklist_person(self, per):
+        new_per = []
+        for p in per:
+            try:
+                pp = config.blacklist_person_obj.sub(u'', p)
+                pp = pp.strip()
+                if pp == u'':
+                    continue
+                new_per.append(pp)
+            except:
+                new_per.append(pp)
+        return new_per
 
     def load_model(self, model_path):
         print('loading %s ...' % (model_path))
@@ -133,3 +195,16 @@ class NameEntityRecognition:
         else:
             self.model = None
 
+
+if __name__ == '__main__':
+    from os.path import join, dirname
+
+    ner_model_path = join(dirname(__file__), "model/ner_model")
+    words_path = join(dirname(__file__), "model/data/words.pl")
+    embed_words_path = join(dirname(__file__), "model/data/vectors.npy")
+    tag_path = join(dirname(__file__), "model/data/tag_data.pkl")
+    data_path = join(dirname(__file__), "model/data")
+
+    params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
+    ner = NameEntityRecognition(*params)
+    print(ner.predict(u'bố m là công sơn', json_format=True))

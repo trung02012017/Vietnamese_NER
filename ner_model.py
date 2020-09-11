@@ -130,7 +130,7 @@ class NameEntityRecognition:
         self.preprocessor = VnCoreNLP(address="http://127.0.0.1", port=9000)
         self.model = None
         self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk())
-        self.r = Regex()
+        self.re = Regex()
 
     def build_model(self, num_lstm_layer, num_hidden_node, dropout, batch_size, patience):
 
