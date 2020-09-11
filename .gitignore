@@ -136,6 +136,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-model/*
-data/*
-model/ner_model/*
+
+model/data/vectors.npy
+VnCoreNLP/*

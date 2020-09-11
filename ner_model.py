@@ -12,7 +12,7 @@ import pickle as pkl
 from regex import Regex
 from Utils import Utils
 
-from os.path import join
+from os.path import join, dirname
 from datetime import datetime
 from vncorenlp import VnCoreNLP
 from underthesea import sent_tokenize
@@ -36,6 +36,7 @@ def load_pos_chunk(data_path):
     pos_path = os.path.join(data_path, "pos_data.pkl")
     chunk_path = os.path.join(data_path, "chunk_data.pkl")
 
+    print(pos_path, chunk_path)
     if os.path.isfile(pos_path) and os.path.isfile(chunk_path):
         pos_data = pkl.load(open(pos_path, "rb"))
         chunk_data = pkl.load(open(chunk_path, "rb"))
@@ -46,7 +47,8 @@ def load_pos_chunk(data_path):
 
 class NameEntityRecognition:
     def __init__(self, model_path, words_path, embedding_vectors_path, tag_path, data_path):
-        self.preprocessor = VnCoreNLP(address="http://127.0.0.1", port=9000)
+        self.preprocessor = VnCoreNLP(join(dirname(__file__), "VnCoreNLP/VnCoreNLP-1.1.1.jar"),
+                                      annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
         self.model = None
         self.load_model(model_path)
         self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))

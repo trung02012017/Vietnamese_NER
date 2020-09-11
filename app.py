@@ -1,4 +1,4 @@
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 from ner_model import NameEntityRecognition
 
 from flask import Flask, jsonify, render_template, request, url_for, Response
@@ -7,11 +7,11 @@ import json
 
 app = Flask(__name__)
 
-ner_model_path = join(dirname(__file__), "model/ner_model")
-words_path = join(dirname(__file__), "model/data/words.pl")
-embed_words_path = join(dirname(__file__), "model/data/vectors.npy")
-tag_path = join(dirname(__file__), "model/data/tag_data.pkl")
-data_path = join(dirname(__file__), "model/data")
+ner_model_path = join(abspath(dirname(__file__)), "model/ner_model")
+words_path = join(abspath(dirname(__file__)), "model/data/words.pl")
+embed_words_path = join(abspath(dirname(__file__)), "model/data/vectors.npy")
+tag_path = join(abspath(dirname(__file__)), "model/data/tag_data.pkl")
+data_path = join(abspath(dirname(__file__)), "model/data")
 
 params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
 ner = NameEntityRecognition(*params)
