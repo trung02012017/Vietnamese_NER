@@ -13,6 +13,7 @@ from regex import Regex
 from Utils import Utils
 from gen_data import DataGenerator
 
+from os.path import join, dirname
 from datetime import datetime
 from vncorenlp import VnCoreNLP
 from underthesea import sent_tokenize
@@ -26,10 +27,10 @@ from tensorflow.keras.models import model_from_json
 # from tensorflow.keras.layers import CRF
 
 
-ID_WORD_EMBEDDING = 0
-ID_POST_ID = 1
-ID_CHUNK_ID = 2
-ID_TAG_ID = 3
+ID_WORD = 0
+ID_POS = 1
+ID_CHUNK = 2
+ID_TAG = 3
 
 
 def building_ner(num_lstm_layer, num_hidden_node, dropout,
@@ -53,10 +54,9 @@ def building_ner(num_lstm_layer, num_hidden_node, dropout,
     return model
 
 
-def get_pre_data():
+def get_pre_data(utils: Utils):
 
     print('Loading data...')
-    utils = Utils(word_dir, vector_dir, tag_path)
     train_data, valid_data, test_data = utils.create_data(train_dir, dev_dir, test_dir)
 
     # self.utils.mkdir('model')
@@ -66,21 +66,23 @@ def get_pre_data():
     return train_data, valid_data, test_data
 
 
-def get_test_data(test_data):
-    embed_words = test_data[ID_WORD_EMBEDDING]
-    pos_ids = test_data[ID_POST_ID]
-    chunk_ids = test_data[ID_CHUNK_ID]
-    labels = test_data[ID_TAG_ID]
+def get_test_data(test_data, utils: Utils):
+    word_list = test_data[ID_WORD]
+    pos_list = test_data[ID_POS]
+    chunk_list = test_data[ID_CHUNK]
+    tag_list = test_data[ID_TAG]
 
-    input_test = embed_words
-    input_test = np.concatenate((input_test, pos_ids), axis=2)
-    input_test = np.concatenate((input_test, chunk_ids), axis=2)
+    word_tensor, pos_tensor, chunk_tensor, tag_tensor = utils.create_vector_data(word_list,
+                                                                                 pos_list,
+                                                                                 chunk_list,
+                                                                                 tag_list)
+    input_test = np.concatenate((word_tensor, pos_tensor, chunk_tensor), axis=2)
+    output_test = tag_tensor
 
-    output_test = labels
     return input_test, output_test
 
 
-def load_pos_chunk(data_path="/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/model/data"):
+def load_pos_chunk(data_path=join(dirname(__file__), "model/data")):
     pos_path = os.path.join(data_path, "pos_data.pkl")
     chunk_path = os.path.join(data_path, "chunk_data.pkl")
 
@@ -120,31 +122,27 @@ class Network:
         return model
 
 
-words_path = "/home/trungtq/Documents/NER/data/words.pl"
-embedding_vectors_path = "/home/trungtq/Documents/NER/data/vectors.npy"
-tag_path = "/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/model/data/tag_data.pkl"
-
-
 class NameEntityRecognition:
     def __init__(self):
         self.preprocessor = VnCoreNLP(address="http://127.0.0.1", port=9000)
         self.model = None
-        self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk())
-        self.re = Regex()
+        self.utils = Utils(word_dir, vector_dir)
+        self.r = Regex()
 
     def build_model(self, num_lstm_layer, num_hidden_node, dropout, batch_size, patience):
 
         startTime = datetime.now()
 
-        train_data, valid_data, test_data = get_pre_data()
-        train_gen = DataGenerator(train_data, batch_size=batch_size)
-        valid_gen = DataGenerator(valid_data, batch_size=batch_size)
+        train_data, valid_data, test_data = get_pre_data(self.utils)
+        train_gen = DataGenerator(train_data, self.utils, batch_size=batch_size)
+        valid_gen = get_test_data(valid_data, utils=self.utils)
 
         print('Building model...')
-        time_step = train_data[ID_WORD_EMBEDDING].shape[1]
+        time_step = self.utils.max_length
 
-        input_length = train_data[ID_WORD_EMBEDDING].shape[2] + train_data[ID_POST_ID].shape[2] + train_data[ID_CHUNK_ID].shape[2]
-        output_length = np.shape(train_data[ID_TAG_ID])[2]
+        input_length = self.utils.embedd_vectors.shape[1] + self.utils.alphabet_pos.size() + \
+                       self.utils.alphabet_chunk.size()
+        output_length = self.utils.alphabet_tag.size()
 
         self.network = Network(num_lstm_layer, num_hidden_node,
                                dropout, time_step, input_length,
@@ -156,14 +154,19 @@ class NameEntityRecognition:
         print('Training model...')
         early_stopping = EarlyStopping(patience=patience)
         ckpt = tf.keras.callbacks.ModelCheckpoint('ckpt/ner.ckpt',
-                                                  save_weights_only=True,
-                                                  save_freq=10,
-                                                  verbose=1)
+                                                  # save_weights_only=True,
+                                                  save_best_only=True,
+                                                  save_freq='epoch',
+                                                  verbose=1
+                                                  )
+
+        tensorboard = tf.keras.callbacks.TensorBoard(log_dir="logs", update_freq="batch")
 
         self.model.fit_generator(generator=train_gen,
                                  validation_data=valid_gen,
                                  epochs=100,
-                                 callbacks=[early_stopping, ckpt])
+                                 max_queue_size=100,
+                                 callbacks=[early_stopping, ckpt, tensorboard])
 
         self.model.save('model/ner_model')
         endTime = datetime.now()
@@ -171,7 +174,7 @@ class NameEntityRecognition:
         print(endTime - startTime)
 
         print("Start testing")
-        x_test, y_test = get_test_data(test_data)
+        x_test, y_test = get_test_data(test_data, utils=self.utils)
         test_loss, test_acc = self.model.evaluate(x_test, y_test)
         print(f"Result on test data: test loss {test_loss}, test_accuracy {test_acc}")
 
@@ -185,13 +188,16 @@ class NameEntityRecognition:
 
 if __name__ == '__main__':
 
-    from os.path import join, dirname
+    from os.path import join, dirname, abspath
 
-    word_dir = join(dirname(__file__), "data/words.pl")
-    vector_dir = join(dirname(__file__), "data/vectors.npy")
-    train_dir = join(dirname(__file__), "data/new/normalize_data/train_sample.txt")
-    dev_dir = join(dirname(__file__), "data/new/normalize_data/val_sample.txt")
-    test_dir = join(dirname(__file__), "data/new/normalize_data/test_sample.txt")
+    word_dir = join(dirname(abspath(__file__)), "data/words.pl")
+    vector_dir = join(dirname(abspath(__file__)), "data/vectors.npy")
+    train_dir = join(dirname(abspath(__file__)), "data/newz/normalize_data/train_data.txt")
+    dev_dir = join(dirname(abspath(__file__)), "data/newz/normalize_data/val_data.txt")
+    test_dir = join(dirname(abspath(__file__)), "data/newz/normalize_data/test_data.txt")
+    # train_dir = join(dirname(abspath(__file__)), "data/small_data/train_sample.txt")
+    # dev_dir = join(dirname(abspath(__file__)), "data/small_data/val_sample.txt")
+    # test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
     num_lstm_layer = 2
     num_hidden_node = 128
     dropout = 0.5
@@ -200,7 +206,3 @@ if __name__ == '__main__':
 
     n = NameEntityRecognition()
     n.build_model(num_lstm_layer, num_hidden_node, dropout, batch_size, patience)
-
-    # n.load_model("/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/model/ner_model")
-    # result = n.predict("Tôi tên là Trần Quang Trung. Địa chỉ nhà tại 1/2/3/4 Chính Kinh, Thanh Xuân, Hà Nội")
-

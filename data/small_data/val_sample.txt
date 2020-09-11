@@ -1,0 +1,43 @@
+Trước_sau	N	<other>	O
+rồi	C	<other>	O
+Tùng	NNP	<other>	B-PER
+cũng	R	<other>	O
+hiểu	V	<other>	O
+...	CH	<punct>	O
+
+Ở	N	<other>	O
+nhà	C	<other>	O
+,	NNP	<punct>	O
+chị	R	<other>	O
+Hằng	V	<other>	B-PER
+bày_tỏ	CH	<other>	O
+sự	E	<other>	O
+lo_lắng	N	<other>	O
+về	CH	<other>	O
+lá	Ns	<other>	O
+thư	NNP	<other>	O
+của	V	<other>	O
+Tùng	N	<other>	B-PER
+.	V	<punct>	O
+
+Chị	N	<other>	O
+đòi	C	<other>	O
+sang	NNP	<other>	O
+gặp	R	<other>	O
+Hải	V	<other>	B-PER
+và	CH	<other>	O
+chất_vấn	E	<other>	O
+.	N	<punct>	O
+
+Tùng	N	<other>	B-PER
+nói	C	<other>	O
+không	NNP	<other>	O
+nên	R	<other>	O
+vội_vàng	V	<other>	O
+mà	CH	<other>	O
+mẹ	E	<other>	O
+phải	N	<other>	O
+âm_thầm	CH	<other>	O
+tìm_hiểu	Ns	<other>	O
+.	NNP	<punct>	O
+
