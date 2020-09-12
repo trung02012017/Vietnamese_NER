@@ -199,7 +199,7 @@ if __name__ == '__main__':
     # test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
     num_lstm_layer = 2
     num_hidden_node = 128
-    dropout = 0.5
+    dropout = 0.2
     batch_size = 64
     patience = 3
 
