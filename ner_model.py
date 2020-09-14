@@ -46,8 +46,6 @@ class NameEntityRecognition:
     def __init__(self, model_path, words_path, embedding_vectors_path, tag_path, data_path):
         self.preprocessor = VnCoreNLP(join(dirname(__file__), "VnCoreNLP/VnCoreNLP-1.1.1.jar"),
                                       annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g', port=9000)
-        # self.preprocessor = VnCoreNLP('/home/nobita/vncorenlp/VnCoreNLP-1.1.1.jar',
-        #                          annotators="wseg,pos,ner", max_heap_size='-Xmx2g', port=9000)
         self.model = None
         self.load_model(model_path)
         self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))
@@ -70,8 +68,9 @@ class NameEntityRecognition:
         for i, sen in enumerate(sentences):
             sen_result = [(w['form'], w['nerLabel']) for w in sen]
             word_raw = [w['form'] for w in sen]
-            # pos_tag = [w['posTag'] for w in sen]
-            pos_tag = [ViPosTagger.postagging(w['form'])[1][0] for w in sen]
+            pos_tag = [w['posTag'] for w in sen]
+            # pos_tag = [ViPosTagger.postagging(w['form'])[1][0] for w in sen]
+            print(pos_tag)
             words = list(map(lambda w: self.re.map_word_label(w), word_raw))
             chunks = list(map(lambda w: self.re.run_ex(w), words))
             word_list.append(words)
@@ -91,7 +90,7 @@ class NameEntityRecognition:
             for i in range(len(word_list_raw)):
                 sen = []
                 for j in range(len(word_list_raw[i])):
-                    if j >= 37:
+                    if j >= self.utils.max_length:
                         continue
                     label = self.utils.alphabet_tag.get_instance(labels[i][j])
                     if label == None:
