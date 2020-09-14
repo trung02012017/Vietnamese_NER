@@ -7,11 +7,12 @@ import json
 
 app = Flask(__name__)
 
-ner_model_path = join(abspath(dirname(__file__)), "model/ner_model")
-words_path = join(abspath(dirname(__file__)), "model/data/words.pl")
-embed_words_path = join(abspath(dirname(__file__)), "model/data/vectors.npy")
-tag_path = join(abspath(dirname(__file__)), "model/data/tag_data.pkl")
-data_path = join(abspath(dirname(__file__)), "model/data")
+root_dir = abspath(dirname(__file__))
+ner_model_path = join(root_dir, "model/ner_model")
+words_path = join(root_dir, "model/data/words.pl")
+embed_words_path = join(root_dir, "model/data/vectors.npy")
+tag_path = join(root_dir, "model/data/tag_data.pkl")
+data_path = join(root_dir, "model/data")
 
 params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
 ner = NameEntityRecognition(*params)

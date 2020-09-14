@@ -44,8 +44,10 @@ def load_pos_chunk(data_path):
 
 class NameEntityRecognition:
     def __init__(self, model_path, words_path, embedding_vectors_path, tag_path, data_path):
-        self.preprocessor = VnCoreNLP(join(dirname(__file__), "VnCoreNLP/VnCoreNLP-1.1.1.jar"),
-                                      annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
+        # self.preprocessor = VnCoreNLP(join(dirname(__file__), "VnCoreNLP/VnCoreNLP-1.1.1.jar"),
+        #                               annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g', port=9000)
+        self.preprocessor = VnCoreNLP('/home/nobita/vncorenlp/VnCoreNLP-1.1.1.jar',
+                                 annotators="wseg,pos,ner", max_heap_size='-Xmx2g', port=9000)
         self.model = None
         self.load_model(model_path)
         self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))
@@ -210,14 +212,16 @@ class NameEntityRecognition:
 
 
 if __name__ == '__main__':
-    from os.path import join, dirname
+    from os.path import join, dirname, abspath
 
-    ner_model_path = join(dirname(__file__), "model/ner_model")
-    words_path = join(dirname(__file__), "model/data/words.pl")
-    embed_words_path = join(dirname(__file__), "model/data/vectors.npy")
-    tag_path = join(dirname(__file__), "model/data/tag_data.pkl")
-    data_path = join(dirname(__file__), "model/data")
+    root_dir = abspath(dirname(__file__))
+    ner_model_path = join(root_dir, "model/ner_model")
+    words_path = join(root_dir, "model/data/words.pl")
+    embed_words_path = join(root_dir, "model/data/vectors.npy")
+    tag_path = join(root_dir, "model/data/tag_data.pkl")
+    data_path = join(root_dir, "model/data")
 
     params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
     ner = NameEntityRecognition(*params)
-    print(ner.predict(u'bố m là công sơn', json_format=True))
+
+    print(ner.predict(u'quận 1 hcm', json_format=True))
