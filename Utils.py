@@ -128,6 +128,8 @@ class Utils:
             words = word_sentences[i]
             length = len(words)
             for j in range(length):
+                if j == max_length:
+                    break
                 word = words[j].lower()
                 try:
                     embed = embed_vectors[embed_words.index(word)]
@@ -142,6 +144,8 @@ class Utils:
         X = np.zeros([len(feature_sentences), max_length, dim])
         for i in range(len(feature_sentences)):
             for j in range(len(feature_sentences[i])):
+                if j == max_length:
+                    break
                 if feature_sentences[i][j] > 0:
                     X[i, j, feature_sentences[i][j]] = 1
         return X

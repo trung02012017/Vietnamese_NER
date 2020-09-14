@@ -1,7 +1,7 @@
 from os.path import join, dirname, abspath
 from ner_model import NameEntityRecognition
 
-from flask import Flask, jsonify, render_template, request, url_for, Response
+from flask import Flask, jsonify, request, Response
 
 import json
 

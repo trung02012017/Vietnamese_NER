@@ -1,9 +1,6 @@
 # -*- encoding: utf-8 -*-
 import unicodedata
-import subprocess
-import shlex
 import os
-import argparse
 
 import numpy as np
 import tensorflow as tf
@@ -15,7 +12,7 @@ from Utils import Utils
 from os.path import join, dirname
 from datetime import datetime
 from vncorenlp import VnCoreNLP
-from underthesea import sent_tokenize
+from pyvi import ViPosTagger
 
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
@@ -66,35 +63,45 @@ class NameEntityRecognition:
         word_list_raw = []
         pos_list = []
         chunk_list = []
+        alter_result = []
+
         for i, sen in enumerate(sentences):
+            sen_result = [(w['form'], w['nerLabel']) for w in sen]
             word_raw = [w['form'] for w in sen]
-            pos_tag = [w['posTag'] for w in sen]
+            # pos_tag = [w['posTag'] for w in sen]
+            pos_tag = [ViPosTagger.postagging(w['form'])[1][0] for w in sen]
             words = list(map(lambda w: self.re.map_word_label(w), word_raw))
             chunks = list(map(lambda w: self.re.run_ex(w), words))
             word_list.append(words)
             word_list_raw.append(word_raw)
             pos_list.append(pos_tag)
             chunk_list.append(chunks)
+            alter_result.append(sen_result)
 
         pos_id_list, alphabet_pos = self.utils.map_string_2_id_open(pos_list, 'pos')
         chunk_id_list, alphabet_chunk = self.utils.map_string_2_id_open(chunk_list, 'chunk')
         X = self.utils.create_vector_data_ex(word_list, pos_id_list, chunk_id_list)
 
         labels = self.model.predict_classes(X)
-        print(labels)
 
-        result = []
-        for i in range(len(word_list_raw)):
-            sen = []
-            for j in range(len(word_list_raw[i])):
-                label = self.utils.alphabet_tag.get_instance(labels[i][j])
-                if label == None:
-                    label = self.utils.alphabet_tag.get_instance(labels[i][j] + 1)
-                if label == None:
-                    raise ValueError('labels %s not define' % (labels[i][j]))
-                sen.append((word_list_raw[i][j], label))
-            result.append(sen)
+        if len(labels[labels != 1]) > 0:
+            result = []
+            for i in range(len(word_list_raw)):
+                sen = []
+                for j in range(len(word_list_raw[i])):
+                    if j >= 37:
+                        continue
+                    label = self.utils.alphabet_tag.get_instance(labels[i][j])
+                    if label == None:
+                        label = self.utils.alphabet_tag.get_instance(labels[i][j] + 1)
+                    if label == None:
+                        raise ValueError('labels %s not define' % (labels[i][j]))
+                    sen.append((word_list_raw[i][j], label))
+                result.append(sen)
+        else:
+            result = alter_result
 
+        print(result)
         result = self.get_final_result(result)
         if json_format:
             return self.get_json_response(result)
