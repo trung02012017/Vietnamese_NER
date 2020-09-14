@@ -44,10 +44,10 @@ def load_pos_chunk(data_path):
 
 class NameEntityRecognition:
     def __init__(self, model_path, words_path, embedding_vectors_path, tag_path, data_path):
-        # self.preprocessor = VnCoreNLP(join(dirname(__file__), "VnCoreNLP/VnCoreNLP-1.1.1.jar"),
-        #                               annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g', port=9000)
-        self.preprocessor = VnCoreNLP('/home/nobita/vncorenlp/VnCoreNLP-1.1.1.jar',
-                                 annotators="wseg,pos,ner", max_heap_size='-Xmx2g', port=9000)
+        self.preprocessor = VnCoreNLP(join(dirname(__file__), "VnCoreNLP/VnCoreNLP-1.1.1.jar"),
+                                      annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g', port=9000)
+        # self.preprocessor = VnCoreNLP('/home/nobita/vncorenlp/VnCoreNLP-1.1.1.jar',
+        #                          annotators="wseg,pos,ner", max_heap_size='-Xmx2g', port=9000)
         self.model = None
         self.load_model(model_path)
         self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))
