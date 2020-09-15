@@ -22,6 +22,7 @@ from sklearn.externals import joblib
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed, Activation, Bidirectional, Masking
+from keras_contrib.layers import CRF
 from tensorflow.keras.models import save_model, load_model
 from tensorflow.keras.models import model_from_json
 # from tensorflow.keras.layers import CRF
@@ -34,7 +35,7 @@ ID_TAG = 3
 
 
 def building_ner(num_lstm_layer, num_hidden_node, dropout,
-                 time_step, vector_length, num_labels):
+                 time_step, vector_length, num_labels, is_crf=True):
     model = Sequential()
 
     model.add(Masking(mask_value=0., input_shape=(time_step, vector_length)))
@@ -44,12 +45,14 @@ def building_ner(num_lstm_layer, num_hidden_node, dropout,
     model.add(Bidirectional(LSTM(units=num_hidden_node, return_sequences=True,
                                  dropout=dropout, recurrent_dropout=dropout),
                             merge_mode='concat'))
-    # crf = CRF(output_lenght, sparse_target=False, name='CRF')
-    # model.add(crf)
-    # model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
-    model.add(TimeDistributed(Dense(num_labels)))
-    model.add(Activation('softmax'))
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    if is_crf:
+        crf = CRF(units=num_labels, sparse_target=False, name='CRF')
+        model.add(crf)
+        model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
+    else:
+        model.add(TimeDistributed(Dense(num_labels)))
+        model.add(Activation('softmax'))
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
 
@@ -95,13 +98,14 @@ def load_pos_chunk(data_path=join(dirname(__file__), "model/data")):
 
 
 class Network:
-    def __init__(self, num_lstm_layers, num_hidden_nodes, dropout, time_step, vector_length, num_labels):
+    def __init__(self, num_lstm_layers, num_hidden_nodes, dropout, time_step, vector_length, num_labels, is_crf=True):
         self.num_lstm_layers = num_lstm_layers
         self.num_hidden_nodes = num_hidden_nodes
         self.dropout = dropout
         self.time_step = time_step
         self.vector_length = vector_length
         self.num_labels = num_labels
+        self.is_crf = is_crf
 
     def build_model(self):
         model = Sequential()
@@ -112,12 +116,14 @@ class Network:
         model.add(Bidirectional(LSTM(units=self.num_hidden_nodes, return_sequences=True,
                                      dropout=self.dropout, recurrent_dropout=self.dropout),
                                 merge_mode='concat'))
-        # crf = CRF(output_lenght, sparse_target=False, name='CRF')
-        # model.add(crf)
-        # model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
-        model.add(TimeDistributed(Dense(self.num_labels)))
-        model.add(Activation('softmax'))
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        if self.is_crf:
+            crf = CRF(units=self.num_labels, sparse_target=False, name='CRF')
+            model.add(crf)
+            model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
+        else:
+            model.add(TimeDistributed(Dense(self.num_labels)))
+            model.add(Activation('softmax'))
+            model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
         return model
 
