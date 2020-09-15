@@ -1,7 +1,8 @@
-numpy==1.18.1
-underthesea==1.1.17
+Keras==2.4.3
 vncorenlp==1.0.3
-Flask==1.1.2
-Unidecode==1.1.1
 tensorflow==2.3.0
-scikit_learn==0.20.3
+Unidecode==1.1.1
+Flask==1.1.2
+numpy==1.18.1
+tf2crf==0.1.19
+underthesea==1.1.17

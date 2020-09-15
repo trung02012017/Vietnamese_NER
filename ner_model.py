@@ -8,7 +8,6 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import pickle as pkl
-
 from regex import Regex
 from Utils import Utils
 from gen_data import DataGenerator
@@ -18,15 +17,14 @@ from datetime import datetime
 from vncorenlp import VnCoreNLP
 from underthesea import sent_tokenize
 
-from sklearn.externals import joblib
+from tf2crf import CRF
+from keras import backend as K
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed, Activation, Bidirectional, Masking
-from keras_contrib.layers import CRF
 from tensorflow.keras.models import save_model, load_model
 from tensorflow.keras.models import model_from_json
 # from tensorflow.keras.layers import CRF
-
 
 ID_WORD = 0
 ID_POS = 1
@@ -35,7 +33,7 @@ ID_TAG = 3
 
 
 def building_ner(num_lstm_layer, num_hidden_node, dropout,
-                 time_step, vector_length, num_labels, is_crf=True):
+                 time_step, vector_length, num_labels, is_crf=False):
     model = Sequential()
 
     model.add(Masking(mask_value=0., input_shape=(time_step, vector_length)))
@@ -45,8 +43,9 @@ def building_ner(num_lstm_layer, num_hidden_node, dropout,
     model.add(Bidirectional(LSTM(units=num_hidden_node, return_sequences=True,
                                  dropout=dropout, recurrent_dropout=dropout),
                             merge_mode='concat'))
+
     if is_crf:
-        crf = CRF(units=num_labels, sparse_target=False, name='CRF')
+        crf = CRF(units=num_labels)
         model.add(crf)
         model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
     else:
@@ -116,12 +115,12 @@ class Network:
         model.add(Bidirectional(LSTM(units=self.num_hidden_nodes, return_sequences=True,
                                      dropout=self.dropout, recurrent_dropout=self.dropout),
                                 merge_mode='concat'))
+        model.add(TimeDistributed(Dense(self.num_labels)))
         if self.is_crf:
-            crf = CRF(units=self.num_labels, sparse_target=False, name='CRF')
+            crf = CRF(dtype='float32')
             model.add(crf)
-            model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
+            model.compile(optimizer='adam', loss=crf.loss, metrics=[crf.accuracy])
         else:
-            model.add(TimeDistributed(Dense(self.num_labels)))
             model.add(Activation('softmax'))
             model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
@@ -134,7 +133,7 @@ class NameEntityRecognition:
         self.utils = Utils(word_dir, vector_dir)
         self.r = Regex()
 
-    def build_model(self, num_lstm_layer, num_hidden_node, dropout, batch_size, patience):
+    def build_model(self, num_lstm_layer, num_hidden_node, dropout, batch_size, patience, n_jobs=6):
 
         startTime = datetime.now()
 
@@ -152,26 +151,31 @@ class NameEntityRecognition:
         self.network = Network(num_lstm_layer, num_hidden_node,
                                dropout, time_step, input_length,
                                output_length)
-        self.model = self.network.build_model()
-        print('Model summary...')
-        print(self.model.summary())
 
-        print('Training model...')
-        early_stopping = EarlyStopping(patience=patience)
-        ckpt = tf.keras.callbacks.ModelCheckpoint('ckpt/ner.ckpt',
-                                                  # save_weights_only=True,
-                                                  save_best_only=True,
-                                                  save_freq='epoch',
-                                                  verbose=1
-                                                  )
+        # tf.config.threading.set_intra_op_parallelism_threads(n_jobs)
+        tf.config.threading.set_inter_op_parallelism_threads(n_jobs)
 
-        tensorboard = tf.keras.callbacks.TensorBoard(log_dir="logs", update_freq="batch")
+        with tf.device('/CPU:0'):
+            self.model = self.network.build_model()
+            print('Model summary...')
+            print(self.model.summary())
 
-        self.model.fit_generator(generator=train_gen,
-                                 validation_data=valid_gen,
-                                 epochs=100,
-                                 max_queue_size=100,
-                                 callbacks=[early_stopping, ckpt, tensorboard])
+            print('Training model...')
+            early_stopping = EarlyStopping(patience=patience)
+            ckpt = tf.keras.callbacks.ModelCheckpoint('ckpt/ner.ckpt',
+                                                      # save_weights_only=True,
+                                                      save_best_only=True,
+                                                      save_freq='epoch',
+                                                      verbose=1
+                                                      )
+
+            tensorboard = tf.keras.callbacks.TensorBoard(log_dir="logs", update_freq="batch")
+
+            self.model.fit_generator(generator=train_gen,
+                                     validation_data=valid_gen,
+                                     epochs=100,
+                                     max_queue_size=100,
+                                     callbacks=[early_stopping, ckpt, tensorboard])
 
         self.model.save('model/ner_model')
         endTime = datetime.now()
