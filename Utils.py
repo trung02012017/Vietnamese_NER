@@ -9,7 +9,7 @@ from regex import Regex
 
 
 class Utils:
-    def __init__(self, word_dir, vector_dir, tag_dir, alphabet_pos=None, alphabet_chunk=None):
+    def __init__(self, input_shape, word_dir, vector_dir, tag_dir, alphabet_pos=None, alphabet_chunk=None):
 
         # load pre-train word2vec
         self.embedd_vectors = np.load(vector_dir)
@@ -18,7 +18,7 @@ class Utils:
         self.embedd_dim = np.shape(self.embedd_vectors)[1]
         # gen embedding vector for unknown token
         self.unknown_embedd = np.random.uniform(-0.01, 0.01, (1, self.embedd_dim))
-        self.max_length = 37
+        self.max_length = input_shape[1]
         self.alphabet_pos = alphabet_pos
         self.alphabet_chunk = alphabet_chunk
         self.alphabet_tag = pkl.load(open(tag_dir, "rb"))

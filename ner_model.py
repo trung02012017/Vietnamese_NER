@@ -48,7 +48,8 @@ class NameEntityRecognition:
                                       annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g', port=9000)
         self.model = None
         self.load_model(model_path)
-        self.utils = Utils(words_path, embedding_vectors_path, tag_path, *load_pos_chunk(data_path))
+        self.utils = Utils(self.model.layers[0].input_shape, words_path, embedding_vectors_path,
+                           tag_path, *load_pos_chunk(data_path))
         self.re = Regex()
 
     def predict(self, data, json_format=False):
