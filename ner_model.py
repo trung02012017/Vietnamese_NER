@@ -186,12 +186,12 @@ if __name__ == '__main__':
 
     word_dir = join(dirname(abspath(__file__)), "data/words.pl")
     vector_dir = join(dirname(abspath(__file__)), "data/vectors.npy")
-    # train_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/train_sample.txt")
-    # dev_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/dev_sample.txt")
-    # test_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/test_sample.txt")
-    train_dir = join(dirname(abspath(__file__)), "data/small_data/train_sample.txt")
-    dev_dir = join(dirname(abspath(__file__)), "data/small_data/val_sample.txt")
-    test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
+    train_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/train_sample.txt")
+    dev_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/dev_sample.txt")
+    test_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/test_sample.txt")
+    # train_dir = join(dirname(abspath(__file__)), "data/small_data/train_sample.txt")
+    # dev_dir = join(dirname(abspath(__file__)), "data/small_data/val_sample.txt")
+    # test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
     num_lstm_layer = 2
     num_hidden_node = 128
     dropout = 0.2
