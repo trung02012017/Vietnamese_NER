@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
-
+# code for python 3.6
 from io import open
-from vncorenlp import VnCoreNLP
 import os
 from regex import Regex
 import unicodedata
@@ -23,7 +22,7 @@ def push_data_to_stack(stack, file_path, file_name):
 
 
 def normalize_data(dataset):
-    nor_dir = 'normalize_data'
+    nor_dir = 'get_person_entity'
     mkdir(nor_dir)
     stack = os.listdir(dataset)
     print('loading data in ' + dataset)
@@ -38,24 +37,19 @@ def normalize_data(dataset):
                 print('processing %s' % (file_path))
                 sen = []; ner = []; pos = []
                 for info in fr:
-                    print(info)
                     info = unicodedata.normalize('NFKC', info)
                     info = info.strip().split(u'\t')
-                    print(info)
                     if len(info) == 1:
                         s, n, p = normalize_per_tag(sen, ner, pos)
-                        word_info = list(map(lambda x: r.run_ex(x), sen))
-                        fw.write(get_string(sen, pos, word_info, n))
+                        word_info = list(map(lambda x: r.run_ex(x), s))
+                        fw.write(get_string(s, p, word_info, n))
                         sen = sen[:0]
                         ner = ner[:0]
+                        pos = ner[:0]
                     else:
                         sen.append(info[0].replace(u' ', u'_'))
                         pos.append(info[1])
-
-                        if len(info) == 3:
-                            ner.append(info[2].split(" ")[1])
-                        else:
-                            ner.append(info[3])
+                        ner.append(info[3])
 
 
 def normalize_per_tag(sen, ner, pos):
@@ -95,4 +89,4 @@ def get_string(word_list, pos_list, word_info, ner_list):
 
 
 if __name__ == '__main__':
-    normalize_data('/home/trungtq/Documents/NER/data/normalize_data')
+    normalize_data('normalize_data')

@@ -10,7 +10,7 @@ from regex import Regex
 
 
 class Utils:
-    def __init__(self, word_dir, vector_dir, tag_dir, alphabet_pos=None, alphabet_chunk=None):
+    def __init__(self, word_dir, vector_dir, alphabet_pos=None, alphabet_chunk=None):
 
         # load pre-train word2vec
         self.embedd_vectors = np.load(vector_dir)
@@ -22,7 +22,7 @@ class Utils:
         self.max_length = 37
         self.alphabet_pos = alphabet_pos
         self.alphabet_chunk = alphabet_chunk
-        self.alphabet_tag = pkl.load(open(tag_dir, "rb"))
+        self.alphabet_tag = None
         self.r = Regex()
 
     def read_conll_format(self, input_file):
@@ -154,8 +154,8 @@ class Utils:
                            tag_id_list):
 
         word_tensor = self.construct_tensor_word(word_list, self.unknown_embedd,
-                                                self.embedd_words, self.embedd_vectors,
-                                                self.embedd_dim, self.max_length)
+                                                 self.embedd_words, self.embedd_vectors,
+                                                 self.embedd_dim, self.max_length)
 
         # categorical pos tag
         dim_pos = self.alphabet_pos.size()
@@ -224,23 +224,11 @@ class Utils:
         print("%%%%%%%%%%%%%%%%%%")
         print("Done preparing data")
 
-        train_data = self.create_vector_data(
-            word_list_train,
-            pos_id_list_train,
-            chunk_id_list_train,
-            tag_id_list_train)
+        train_data = (word_list_train, pos_id_list_train, chunk_id_list_train, tag_id_list_train)
 
-        valid_data = self.create_vector_data(
-            word_list_val,
-            pos_id_list_val,
-            chunk_id_list_val,
-            tag_id_list_val)
+        valid_data = (word_list_val, pos_id_list_val, chunk_id_list_val, tag_id_list_val)
 
-        test_data = self.create_vector_data(
-            word_list_test,
-            pos_id_list_test,
-            chunk_id_list_test,
-            tag_id_list_test)
+        test_data = (word_list_test, pos_id_list_test, chunk_id_list_test, tag_id_list_test)
 
         self.save_data()
 
@@ -311,4 +299,3 @@ class Utils:
     def mkdir(self, dir):
         if (os.path.exists(dir) == False):
             os.mkdir(dir)
-

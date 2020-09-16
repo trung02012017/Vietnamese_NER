@@ -1,3 +1,2 @@
 #! /bin/bash
-python ner_model.py --word_dir /home/trungtq/Documents/NER/data/words.pl --vector_dir /home/trungtq/Documents/NER/data/vectors.npy --train_dir /home/trungtq/Documents/NER/data/small_data/train_sample.txt --dev_dir /home/trungtq/Documents/NER/data/small_data/val_sample.txt --test_dir /home/trungtq/Documents/NER/data/small_data/test_sample.txt --num_lstm_layer 2 --num_hidden_node 128 --dropout 0.5 --batch_size 64 --patience 3
-#python2 ner.py --word_dir embedding/words.pl --vector_dir embedding/vectors.npy --train_dir small_data/train_sample.txt --dev_dir small_data/dev_sample.txt --test_dir small_data/test_sample.txt --num_lstm_layer 2 --num_hidden_node 128 --dropout 0.5 --batch_size 64 --patience 3
+python ner_model.py
