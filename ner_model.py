@@ -3,6 +3,7 @@ import unicodedata
 import subprocess
 import shlex
 import os
+import json
 import argparse
 
 import numpy as np
@@ -30,31 +31,6 @@ ID_WORD = 0
 ID_POS = 1
 ID_CHUNK = 2
 ID_TAG = 3
-
-
-def building_ner(num_lstm_layer, num_hidden_node, dropout,
-                 time_step, vector_length, num_labels, is_crf=False):
-    model = Sequential()
-
-    model.add(Masking(mask_value=0., input_shape=(time_step, vector_length)))
-    for i in range(num_lstm_layer-1):
-        model.add(Bidirectional(LSTM(units=num_hidden_node, return_sequences=True,
-                                     dropout=dropout, recurrent_dropout=dropout)))
-    model.add(Bidirectional(LSTM(units=num_hidden_node, return_sequences=True,
-                                 dropout=dropout, recurrent_dropout=dropout),
-                            merge_mode='concat'))
-
-    if is_crf:
-        crf = CRF(units=num_labels)
-        model.add(crf)
-        model.compile(optimizer='adam', loss=crf.loss_function, metrics=[crf.accuracy])
-    else:
-        model.add(TimeDistributed(Dense(num_labels)))
-        model.add(Activation('softmax'))
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-    return model
-
 
 def get_pre_data(utils: Utils):
 
@@ -97,7 +73,7 @@ def load_pos_chunk(data_path=join(dirname(__file__), "model/data")):
 
 
 class Network:
-    def __init__(self, num_lstm_layers, num_hidden_nodes, dropout, time_step, vector_length, num_labels, is_crf=True):
+    def __init__(self, num_lstm_layers, num_hidden_nodes, dropout, time_step, vector_length, num_labels, is_crf=False):
         self.num_lstm_layers = num_lstm_layers
         self.num_hidden_nodes = num_hidden_nodes
         self.dropout = dropout
@@ -109,7 +85,7 @@ class Network:
     def build_model(self):
         model = Sequential()
         model.add(Masking(mask_value=0., input_shape=(self.time_step, self.vector_length)))
-        for i in range(num_lstm_layer - 1):
+        for i in range(self.num_lstm_layers - 1):
             model.add(Bidirectional(LSTM(units=self.num_hidden_nodes, return_sequences=True,
                                          dropout=self.dropout, recurrent_dropout=self.dropout)))
         model.add(Bidirectional(LSTM(units=self.num_hidden_nodes, return_sequences=True,
@@ -177,7 +153,7 @@ class NameEntityRecognition:
                                      max_queue_size=100,
                                      callbacks=[early_stopping, ckpt, tensorboard])
 
-        self.model.save('model/ner_model')
+        self.save_model('model/ner_model')
         endTime = datetime.now()
         print("Running time: ")
         print(endTime - startTime)
@@ -187,12 +163,21 @@ class NameEntityRecognition:
         test_loss, test_acc = self.model.evaluate(x_test, y_test)
         print(f"Result on test data: test loss {test_loss}, test_accuracy {test_acc}")
 
-    def load_model(self, model_path):
-        print('loading %s ...' % (model_path))
-        if os.path.isdir(model_path):
-            self.model = tf.keras.models.load_model(model_path)
-        else:
-            self.model = None
+    def save_model(self, model_path):
+        # print('loading %s ...' % (model_path))
+        # if os.path.isdir(model_path):
+        #     self.model = tf.keras.models.load_model(model_path)
+        # else:
+        #     self.model = None
+
+        json_model = self.model.to_json()
+
+        with open(join(model_path, "model_structure.json"), "w") as fp:
+            fp.write(json_model)
+
+        self.model.save_weights(join(model_path, "model_weights.h5"))
+
+
 
 
 if __name__ == '__main__':
@@ -201,16 +186,16 @@ if __name__ == '__main__':
 
     word_dir = join(dirname(abspath(__file__)), "data/words.pl")
     vector_dir = join(dirname(abspath(__file__)), "data/vectors.npy")
-    train_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/train_sample.txt")
-    dev_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/dev_sample.txt")
-    test_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/test_sample.txt")
-    # train_dir = join(dirname(abspath(__file__)), "data/small_data/train_sample.txt")
-    # dev_dir = join(dirname(abspath(__file__)), "data/small_data/val_sample.txt")
-    # test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
+    # train_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/train_sample.txt")
+    # dev_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/dev_sample.txt")
+    # test_dir = join(dirname(abspath(__file__)), "data/newz/normalized_data/test_sample.txt")
+    train_dir = join(dirname(abspath(__file__)), "data/small_data/train_sample.txt")
+    dev_dir = join(dirname(abspath(__file__)), "data/small_data/val_sample.txt")
+    test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
     num_lstm_layer = 2
     num_hidden_node = 128
     dropout = 0.2
-    batch_size = 64
+    batch_size = 2
     patience = 3
 
     n = NameEntityRecognition()

@@ -31,7 +31,7 @@ def create_lower_data(datapath):
         fp.close()
 
 
-if __name__ == '__main__':
+def create_location_data():
     address = pd.read_csv("/home/trungtq/Documents/NER/data/list_address/Danh sách cấp xã ___13_07_2020.csv")
     address = address.fillna("")
     print(address)
@@ -126,4 +126,15 @@ if __name__ == '__main__':
 
     with open("location_data.txt", "w") as fp:
         fp.write("\n".join(location_data))
+        fp.close()
+
+
+if __name__ == '__main__':
+    data_1 = open("/home/trungtq/Documents/NER/data/lower_doubling/train_sample.txt").read().split("\n")
+    data_2 = open("/home/trungtq/Documents/NER/data/location_data.txt").read()
+    data_2 = data_2.replace("\n\n", "\n").split("\n")
+
+    data = data_1[:len(data_1) - 1] + data_2
+    with open("train_sample.txt", "w") as fp:
+        fp.write("\n".join(data))
         fp.close()
