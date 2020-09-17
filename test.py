@@ -130,11 +130,13 @@ def create_location_data():
 
 
 if __name__ == '__main__':
-    data_1 = open("/home/trungtq/Documents/NER/data/lower_doubling/train_sample.txt").read().split("\n")
-    data_2 = open("/home/trungtq/Documents/NER/data/location_data.txt").read()
-    data_2 = data_2.replace("\n\n", "\n").split("\n")
+    import tensorflow as tf
 
-    data = data_1[:len(data_1) - 1] + data_2
-    with open("train_sample.txt", "w") as fp:
-        fp.write("\n".join(data))
+    with open("/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/Vietnamese_NER/model/ner_model/model_structure.json", "r") as fp:
+        json_model = fp.read()
         fp.close()
+
+    model = tf.keras.models.model_from_json(json_model)
+    model.load_weights("model/ner_model/model_weights.h5")
+
+    print(model.summary())
