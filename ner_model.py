@@ -195,7 +195,7 @@ if __name__ == '__main__':
     num_lstm_layer = 2
     num_hidden_node = 128
     dropout = 0.2
-    batch_size = 2
+    batch_size = 64
     patience = 3
 
     n = NameEntityRecognition()
