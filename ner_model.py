@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 import unicodedata
 import os
+import json
 
 import numpy as np
 import tensorflow as tf
@@ -204,11 +205,24 @@ class NameEntityRecognition:
         return new_per
 
     def load_model(self, model_path):
-        print('loading %s ...' % (model_path))
-        if os.path.isdir(model_path):
-            self.model = tf.keras.models.load_model(model_path)
-        else:
-            self.model = None
+        # print('loading %s ...' % (model_path))
+        # if os.path.isdir(model_path):
+        #     self.model = tf.keras.models.load_model(model_path)
+        # else:
+        #     self.model = None
+
+        try:
+            model_structure_path = join(model_path, "model_structure.json")
+            model_weights_path = join(model_path, "model_weights.h5")
+
+            with open(model_structure_path, "r") as fp:
+                json_model = fp.read()
+                fp.close()
+
+            self.model = tf.keras.models.model_from_json(json_model)
+            self.model.load_weights(model_weights_path)
+        except:
+            print("Load model fail")
 
 
 if __name__ == '__main__':
