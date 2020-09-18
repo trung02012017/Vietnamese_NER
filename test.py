@@ -167,17 +167,50 @@ if __name__ == '__main__':
         while year < last_year + 1:
             text = " ".join([row['brand'], row['model'], str(year)])
             sen = annotator.annotate(text)['sentences']
-            words = [w['form'] for w in sen[0]]
+            words_1 = [w['form'] for w in sen[0]]
+            words_2 = [w['form'].upper() for w in sen[0]]
+            words_3 = [w['form'].title() for w in sen[0]]
             pos_tags = [w['posTag'] for w in sen[0]]
-            regexes = [regex.run(w) for w in words]
+            regexes = [regex.run(w) for w in words_1]
 
-            for w_idx, word in enumerate(words):
+            for w_idx, word in enumerate(words_1):
                 if w_idx == 0:
-                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "B-MOTOR"
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "BRAND"
+                elif w_idx == len(words_1) - 1:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "YEAR"
+                elif w_idx == 1:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "B-MODEL"
                 else:
-                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "I-MOTOR"
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "I-MODEL"
+                moto_info_data.append(line)
+            moto_info_data.append("")
+
+            for w_idx, word in enumerate(words_2):
+                if w_idx == 0:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "BRAND"
+                elif w_idx == len(words_2) - 1:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "YEAR"
+                elif w_idx == 1:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "B-MODEL"
+                else:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "I-MODEL"
+                moto_info_data.append(line)
+            moto_info_data.append("")
+
+            for w_idx, word in enumerate(words_3):
+                if w_idx == 0:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "BRAND"
+                elif w_idx == len(words_3) - 1:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "YEAR"
+                elif w_idx == 1:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "B-MODEL"
+                else:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "I-MODEL"
                 moto_info_data.append(line)
             moto_info_data.append("")
             year += 1
 
-    print("\n".join(moto_info_data))
+    with open("motor_data.txt", "w") as fp:
+        text = "\n".join(moto_info_data)
+        fp.write(text)
+        fp.close()
