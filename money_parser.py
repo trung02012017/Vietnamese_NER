@@ -113,6 +113,8 @@ def stoi(str_val):
         return None
 
 
-# s = 't muốn vay hai triệu rưỡi'
-s = 't muon vay 5000$'
-print(parse(s))
+
+if __name__ == '__main__':
+    # s = 't muốn vay hai triệu rưỡi'
+    s = 't muon vay 5000$'
+    print(parse(s))

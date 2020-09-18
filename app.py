@@ -1,5 +1,6 @@
 from os.path import join, dirname, abspath
 from ner_model import NameEntityRecognition
+from money_parser import parse
 
 from flask import Flask, jsonify, request, Response
 
@@ -39,6 +40,19 @@ def process_request_ex():
     print(u'Input:\n%s' % (data))
     result = ner.predict(data['data'], json_format=True)
     return jsonify(result)
+
+
+@app.route('/parse_money', methods=['POST'])
+def parse_money():
+    try:
+        data = request.data
+        data = json.loads(data)
+    except:
+        return Response(response='Bad request', status=400)
+    print(u'Input:\n%s' % (data))
+    result = parse(data['data'])
+    return jsonify({'result':result})
+
 
 
 if __name__ == '__main__':
