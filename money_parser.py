@@ -3,13 +3,13 @@ import re
 
 normalize_space = re.compile(r' +')
 
-detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*',
+detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|lít|củ|tỷ|tr|t|k)'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*',
                             flags=re.IGNORECASE)
 detect_money_2 = re.compile(r'\d{7,9}')
 detect_money_3 = re.compile(r'\d{3,6} *\$')
@@ -20,7 +20,7 @@ map_table = {'tỷ':1e9,
              'triệu':1e6, 'tr':1e6, 't':1e6, 'trieu':1e6,
              'củ':1e6, 'cành':1e5, 'chai':1e6, 'lít':1e5,
              'k':1e3, 'nghìn':1e3, 'ngìn':1e3, 'ngàn':1e3,
-             'trăm':1e2, 'mươi':10, '.':0.1,
+             'trăm':1e2, 'mươi':10, 'chục':10, '.':0.1,
              '$': 23000}
 
 map_table_2 = {}
@@ -109,10 +109,12 @@ def stoi(str_val):
             except:
                 if w == 'rưỡi':
                     value += 0.5 * unit
-                elif w == 'mươi':
+                elif w == 'mươi' or w == 'trăm':
                     unit = map_table[w]
                     number *= unit
-                elif w == 'trăm':
+                elif w == 'chục':
+                    if number == 0:
+                        number = 1
                     unit = map_table[w]
                     number *= unit
                 else:
@@ -162,5 +164,5 @@ def special_stoi(str_val):
 
 if __name__ == '__main__':
     # s = '500    k 2tr'
-    s = 'tôi muốn vay bốn củ rưỡi'
+    s = 'tôi muốn vay 3 chục triệu'
     print(parse(s))
