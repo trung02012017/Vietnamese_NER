@@ -24,23 +24,23 @@ def parse(s):
     ss = stoi_ex(ss)
     for obj in detect_money:
         v = get_value(obj, ss)
-        if v is not None:
+        if v[1] is not None:
             return v
 
 
 def get_value(reobj, ss):
     try:
-        value = None
+        value_str = None
         finditer = reobj.finditer(ss)
         for m in finditer:
             x = m.regs[0]
-            value = normalize_space.sub(' ', ss[x[0]:x[1]])
+            value_str = normalize_space.sub(' ', ss[x[0]:x[1]])
             break
 
-        value = stoi(value)
-        return value
+        value = stoi(value_str)
+        return [value_str, value]
     except:
-        return None
+        return [None, None]
 
 
 def stoi_ex(raw):
@@ -122,6 +122,6 @@ def stoi(str_val):
 
 
 if __name__ == '__main__':
-    s = '2.5tr'
-    # s = 't muon vay 5000$'
+    # s = '2.5tr'
+    s = 't muon vay 5000$'
     print(parse(s))
