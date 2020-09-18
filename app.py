@@ -53,7 +53,8 @@ def parse_money():
         print(u'Input:\n%s' % (data))
         try:
             result = parse(data['data'])
-            return jsonify({'result': result})
+            return jsonify({'result': {'text': result[0],
+                                       'number': result[1]}})
         except:
             return Response(response='Service fail', status=500)
     except:
