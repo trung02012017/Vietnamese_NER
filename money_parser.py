@@ -4,12 +4,12 @@ import re
 normalize_space = re.compile(r' +')
 
 detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*',
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|rưỡi|lít|củ|tỷ|tr|t|k)*',
                             flags=re.IGNORECASE)
 detect_money_2 = re.compile(r'\d{7,9}')
 detect_money_3 = re.compile(r'\d{3,6} *\$')
@@ -131,8 +131,36 @@ def stoi(str_val):
         return None
 
 
+def special_stoi(str_val):
+    global map_table
+    try:
+        new_str = normalize_value(str_val)
+        new_str = normalize_space.sub(' ', new_str)
+        words = new_str.strip().split()
+        unit = 0; value = 0; number = 0; previous_unit = None
+        for w in words:
+            try:
+                number = float(w)
+            except:
+                if w == 'rưỡi':
+                    value += 0.5 * unit
+                elif w == 'mươi':
+                    unit = map_table[w]
+                    number *= unit
+                elif w == 'trăm':
+                    unit = map_table[w]
+                    number *= unit
+                else:
+                    unit = map_table[w]
+                    previous_unit = unit
+                    value += number * unit
+    except:
+        return None
+
+
+
 
 if __name__ == '__main__':
-    # s = '2.5tr'
-    s = 'tôi muốn vay 4 trăm năm mươi triệu'
+    # s = '500    k 2tr'
+    s = 'tôi muốn vay bốn củ rưỡi'
     print(parse(s))
