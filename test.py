@@ -147,9 +147,7 @@ def query_postgre_motors(conn, sql_query):
     return pd.read_sql(sql_query, conn)
 
 
-if __name__ == '__main__':
-    from vncorenlp import VnCoreNLP
-
+def create_motor_data():
     regex = Regex()
     annotator = VnCoreNLP(address="http://127.0.0.1", port=9000)
     conn_moto_info = connect_db_postgre_moto_info()
@@ -214,3 +212,20 @@ if __name__ == '__main__':
         text = "\n".join(moto_info_data)
         fp.write(text)
         fp.close()
+
+
+if __name__ == '__main__':
+    from random import shuffle
+
+    data_train = open("/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/Vietnamese_NER/data/newz/"
+                      "normalized_data/train_sample.txt").read().split("\n\n")
+    data_motor = open("/home/trungtq/Documents/NER/data/motor_data.txt").read().split("\n\n")
+
+    data = data_train + data_motor
+    shuffle(data)
+
+    with open("train_sample.txt", "w") as fp:
+        fp.write("\n\n".join(data))
+        fp.close()
+
+
