@@ -102,60 +102,54 @@ def stoi(str_val):
         new_str = normalize_value(str_val)
         new_str = normalize_space.sub(' ', new_str)
         words = new_str.strip().split()
-        unit = 0; value = 0; number = 0; previous_unit = None
+        unit = 0; value = 0; number = 0; previous_unit = None; temp = 0; flag = False
         for w in words:
             try:
-                number = float(w)
+                if number != 0 and (flag or value == 0):
+                    temp = float(w)
+                else:
+                    number = float(w)
             except:
                 if w == 'rưỡi':
                     value += 0.5 * unit
                 elif w == 'mươi' or w == 'trăm':
                     unit = map_table[w]
-                    number *= unit
+                    if temp != 0:
+                        temp *= unit
+                        number += temp
+                        temp = 0
+                        flag = False
+                    else:
+                        flag = True
+                        number *= unit
                 elif w == 'chục':
-                    if number == 0:
-                        number = 1
                     unit = map_table[w]
-                    number *= unit
+                    if temp != 0:
+                        temp *= unit
+                        number += temp
+                        temp = 0
+                        flag = False
+                    else:
+                        if number == 0:
+                            number = 1
+                        number *= unit
                 else:
                     unit = map_table[w]
                     previous_unit = unit
-                    value += number * unit
+                    if temp != 0:
+                        number += temp
+                    number *= unit
+                    value += number
+                    number = 0
         try:
             if previous_unit is not None and words[-1] == 'trăm':
                 value += number * previous_unit / 1e3
             else:
                 _ = float(words[-1])
                 value += number * unit / 10
-        except: pass
+        except:
+            pass
         return int(value)
-    except:
-        return None
-
-
-def special_stoi(str_val):
-    global map_table
-    try:
-        new_str = normalize_value(str_val)
-        new_str = normalize_space.sub(' ', new_str)
-        words = new_str.strip().split()
-        unit = 0; value = 0; number = 0; previous_unit = None
-        for w in words:
-            try:
-                number = float(w)
-            except:
-                if w == 'rưỡi':
-                    value += 0.5 * unit
-                elif w == 'mươi':
-                    unit = map_table[w]
-                    number *= unit
-                elif w == 'trăm':
-                    unit = map_table[w]
-                    number *= unit
-                else:
-                    unit = map_table[w]
-                    previous_unit = unit
-                    value += number * unit
     except:
         return None
 
@@ -164,5 +158,5 @@ def special_stoi(str_val):
 
 if __name__ == '__main__':
     # s = '500    k 2tr'
-    s = 'tôi muốn vay 3 chục triệu'
+    s = 'tôi muốn vay 4 trăm 2 mươi năm triệu'
     print(parse(s))
