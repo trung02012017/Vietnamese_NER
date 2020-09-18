@@ -22,11 +22,18 @@ ner = NameEntityRecognition(*params)
 @app.route('/name_entity', methods=['GET', 'POST'])
 def get_name_entity():
     global ner
-    if request.method == 'POST':
-        data = request.get_json()
-        sentences = data["paragraph"]
-        result = ner.predict(sentences)
-        return {"result": result}
+
+    try:
+        if request.method == 'POST':
+            data = request.get_json()
+            sentences = data["paragraph"]
+            try:
+                result = ner.predict(sentences)
+                return {"result": result}
+            except:
+                return Response(response='Service fail', status=500)
+    except:
+        return Response(response='Bad request', status=400)
 
 
 @app.route('/ner_extra', methods=['POST'])
