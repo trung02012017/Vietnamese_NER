@@ -3,19 +3,30 @@ import re
 
 normalize_space = re.compile(r' +')
 
-detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|tr|t|k|nghìn|ngìn|ngàn|trăm|mươi) *\d* *(k|nghìn|ngìn|ngàn|rưỡi|trăm)* *\d* *(k|nghìn|ngìn|ngàn|rưỡi|trăm)*', flags=re.IGNORECASE)
+detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|lít|củ|tỷ|tr|t|k)*',
+                            flags=re.IGNORECASE)
 detect_money_2 = re.compile(r'\d{7,9}')
 detect_money_3 = re.compile(r'\d{3,6} *\$')
 
 detect_money = [detect_money_1, detect_money_2, detect_money_3]
 
-map_table = {'triệu':1e6, 'tr':1e6, 't':1e6, 'trieu':1e6,
+map_table = {'tỷ':1e9,
+             'triệu':1e6, 'tr':1e6, 't':1e6, 'trieu':1e6,
+             'củ':1e6, 'cành':1e5, 'chai':1e6, 'lít':1e5,
              'k':1e3, 'nghìn':1e3, 'ngìn':1e3, 'ngàn':1e3,
              'trăm':1e2, 'mươi':10, '.':0.1,
              '$': 23000}
 
+map_table_2 = {}
+
 stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'5', 'sáu':'6',
-               'bảy':'7', 'bẩy':'7', 'tám':'8', 'chín':'9', 'mười':'10'}
+            'bảy':'7', 'bẩy':'7', 'tám':'8', 'chín':'9', 'mười':'10'}
 
 
 def parse(s):
@@ -123,5 +134,5 @@ def stoi(str_val):
 
 if __name__ == '__main__':
     # s = '2.5tr'
-    s = 't muon vay 5000$'
+    s = 'tôi muốn vay 4 trăm năm mươi triệu'
     print(parse(s))
