@@ -178,8 +178,6 @@ class NameEntityRecognition:
         self.model.save_weights(join(model_path, "model_weights.h5"))
 
 
-
-
 if __name__ == '__main__':
 
     from os.path import join, dirname, abspath

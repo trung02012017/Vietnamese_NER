@@ -1,3 +1,5 @@
+import psycopg2
+
 import numpy as np
 import pandas as pd
 
@@ -129,14 +131,53 @@ def create_location_data():
         fp.close()
 
 
+def connect_db_postgre_moto_info():
+
+    db_host = "172.16.30.240"
+    port = 5432
+    db_name = "credit_score"
+    user = "credit_score"
+    password = "lbHoKPMYyuc5LO4z"
+
+    conn = psycopg2.connect(host=db_host, port=port, database=db_name, user=user, password=password)
+    return conn
+
+
+def query_postgre_motors(conn, sql_query):
+    return pd.read_sql(sql_query, conn)
+
+
 if __name__ == '__main__':
-    import tensorflow as tf
+    from vncorenlp import VnCoreNLP
 
-    with open("/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/Vietnamese_NER/model/ner_model/model_structure.json", "r") as fp:
-        json_model = fp.read()
-        fp.close()
+    regex = Regex()
+    annotator = VnCoreNLP(address="http://127.0.0.1", port=9000)
+    conn_moto_info = connect_db_postgre_moto_info()
 
-    model = tf.keras.models.model_from_json(json_model)
-    model.load_weights("model/ner_model/model_weights.h5")
+    query = """select * from motors"""
+    df = query_postgre_motors(conn_moto_info, query)
 
-    print(model.summary())
+    print(df)
+
+    moto_info_data = []
+    for i, row in df.iterrows():
+        first_year = row['first_year']
+        last_year = row['last_year']
+        year = first_year
+        while year < last_year + 1:
+            text = " ".join([row['brand'], row['model'], str(year)])
+            sen = annotator.annotate(text)['sentences']
+            words = [w['form'] for w in sen[0]]
+            pos_tags = [w['posTag'] for w in sen[0]]
+            regexes = [regex.run(w) for w in words]
+
+            for w_idx, word in enumerate(words):
+                if w_idx == 0:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "B-MOTOR"
+                else:
+                    line = word + "\t" + pos_tags[w_idx] + "\t" + regexes[w_idx] + "\t" + "I-MOTOR"
+                moto_info_data.append(line)
+            moto_info_data.append("")
+            year += 1
+
+    print("\n".join(moto_info_data))
