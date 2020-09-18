@@ -3,7 +3,7 @@ import re
 
 normalize_space = re.compile(r' +')
 
-detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|tr|t|k|nghìn|ngìn|ngàn|trăm|mươi) *\d* *(triệu|trieu|tr|k|nghìn|ngìn|ngàn|rưỡi|trăm)* *\d* *(triệu|trieu|tr|k|nghìn|ngìn|ngàn|rưỡi|trăm)*', flags=re.IGNORECASE)
+detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|tr|t|k|nghìn|ngìn|ngàn|trăm|mươi) *\d* *(k|nghìn|ngìn|ngàn|rưỡi|trăm)* *\d* *(k|nghìn|ngìn|ngàn|rưỡi|trăm)*', flags=re.IGNORECASE)
 detect_money_2 = re.compile(r'\d{7,9}')
 detect_money_3 = re.compile(r'\d{3,6} *\$')
 
@@ -91,7 +91,7 @@ def stoi(str_val):
         new_str = normalize_value(str_val)
         new_str = normalize_space.sub(' ', new_str)
         words = new_str.strip().split()
-        unit = 0; value = 0; number = 0
+        unit = 0; value = 0; number = 0; previous_unit = None
         for w in words:
             try:
                 number = float(w)
@@ -101,12 +101,19 @@ def stoi(str_val):
                 elif w == 'mươi':
                     unit = map_table[w]
                     number *= unit
+                elif w == 'trăm':
+                    unit = map_table[w]
+                    number *= unit
                 else:
                     unit = map_table[w]
+                    previous_unit = unit
                     value += number * unit
         try:
-            _ = float(new_str[-1])
-            value += number * unit / 10
+            if previous_unit is not None and words[-1] == 'trăm':
+                value += number * previous_unit / 1e3
+            else:
+                _ = float(words[-1])
+                value += number * unit / 10
         except: pass
         return int(value)
     except:
@@ -115,6 +122,6 @@ def stoi(str_val):
 
 
 if __name__ == '__main__':
-    # s = 't muốn vay hai triệu rưỡi'
-    s = 't muon vay 5000$'
+    s = '2.5tr'
+    # s = 't muon vay 5000$'
     print(parse(s))
