@@ -35,11 +35,14 @@ def process_request_ex():
     try:
         data = request.data
         data = json.loads(data)
+        print(u'Input:\n%s' % (data))
+        try:
+            result = ner.predict(data['data'], json_format=True)
+            return jsonify(result)
+        except:
+            return Response(response='Service fail', status=500)
     except:
         return Response(response='Bad request', status=400)
-    print(u'Input:\n%s' % (data))
-    result = ner.predict(data['data'], json_format=True)
-    return jsonify(result)
 
 
 @app.route('/parse_money', methods=['POST'])
@@ -47,12 +50,14 @@ def parse_money():
     try:
         data = request.data
         data = json.loads(data)
+        print(u'Input:\n%s' % (data))
+        try:
+            result = parse(data['data'])
+            return jsonify({'result': result})
+        except:
+            return Response(response='Service fail', status=500)
     except:
         return Response(response='Bad request', status=400)
-    print(u'Input:\n%s' % (data))
-    result = parse(data['data'])
-    return jsonify({'result':result})
-
 
 
 if __name__ == '__main__':
