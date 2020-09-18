@@ -33,6 +33,32 @@ def create_lower_data(datapath):
         fp.close()
 
 
+def create_location_sentence(is_prefix, is_comma,
+                             town, district, city,
+                             prefix_town, prefix_district, prefix_city):
+    if is_prefix:
+        pass
+    else:
+        if any([w in town for w in prefix_town]):
+            for w in prefix_town:
+                town = town.replace(w, "").strip()
+
+        if any([w in district for w in prefix_district]):
+            for w in prefix_district:
+                district = district.replace(w, "").strip()
+
+        if any([w in city for w in prefix_city]):
+            for w in prefix_city:
+                city = city.replace(w, "").strip()
+
+    if is_comma:
+        add_str = ", ".join([town, district, city])
+    else:
+        add_str = " ".join([town, district, city])
+
+    return add_str
+
+
 def create_location_data():
     address = pd.read_csv("/home/trungtq/Documents/NER/data/list_address/Danh sách cấp xã ___13_07_2020.csv")
     address = address.fillna("")
@@ -40,91 +66,44 @@ def create_location_data():
 
     regex = Regex()
     preprocessor = VnCoreNLP("http://127.0.0.1", port=9000)
-    town_set = []
-    district_set = []
-    city_set = []
 
-    count_exception = 0
     location_data = []
     for i, row in address.iterrows():
         print(i)
-        town = row['Tên']
-        district = row['Quận Huyện']
-        city = row['Tỉnh / Thành Phố']
+        if len(row['Tên'].split()) > 0:
+            town = " ".join([row['Tên'].split()[0].lower()] + row['Tên'].split()[1:])
+        else:
+            town = row['Tên']
+        district = " ".join([row['Quận Huyện'].split()[0].lower()] + row['Quận Huyện'].split()[1:])
+        city = " ".join([row['Tỉnh / Thành Phố'].split()[0].lower()] + row['Tỉnh / Thành Phố'].split()[1:])
 
-        try:
-            town_tokenize = preprocessor.annotate(town)
-            town_sen = town_tokenize['sentences'][0]
-            town_w = [w['form'] for w in town_sen]
+        prefix_town = ["xã", "phường", "thị trấn"]
+        prefix_district = ["huyện", "thành phố", "thị xã", "quận"]
+        prefix_city = ["tỉnh", "thành phố"]
 
-            district_tokenize = preprocessor.annotate(district)
-            district_sen = district_tokenize['sentences'][0]
-            district_w = [w['form'] for w in district_sen]
+        params = [town, district, city, prefix_town, prefix_district, prefix_city]
+        add_str_1 = create_location_sentence(True, True, *params)
+        add_str_2 = create_location_sentence(True, False, *params)
+        add_str_3 = create_location_sentence(False, True, *params)
+        add_str_4 = create_location_sentence(False, False, *params)
 
-            city_tokenize = preprocessor.annotate(city)
-            city_sen = city_tokenize['sentences'][0]
-            city_w = [w['form'] for w in city_sen]
-
-            prefix_town = ["xã", "phường", "thị_trấn"]
-            prefix_district = ["huyện", "thành_phố", "thị_xã", "quận"]
-            prefix_city = ["tỉnh", "thành_phố"]
-
-            if town_w[0].lower() in prefix_town and district_w[0].lower() in prefix_district \
-                    and city_w[0].lower() in prefix_city and city_w[1].lower() != "Hồ Chí Minh":
-                drop_prop = np.random.rand()
-                if 0 <= drop_prop <= 0.25:
-                    town_w[0] = town_w[0].lower()
-                    district_w[0] = district_w[0].lower()
-                    city_w[0] = city_w[0].lower()
-                elif 0.25 < drop_prop <= 0.5:
-                    town_w = town_w[1:]
-                    district_w[0] = district_w[0].lower()
-                    city_w[0] = city_w[0].lower()
-                elif 0.5 < drop_prop <= 0.75:
-                    town_w = town_w[1:]
-                    district_w = district_w[1:]
-                    city_w[0] = city_w[0].lower()
-                elif 0.75 < drop_prop <= 1:
-                    town_w = town_w[1:]
-                    district_w = district_w[1:]
-                    city_w = city_w[1:]
-
-            comma_prop = np.random.rand()
-
-            if 0 <= comma_prop <= 1/3:
-                add_str = town_w + district_w + city_w
-            elif 1/3 <= comma_prop < 2/3:
-                add_str = town_w + district_w + [","] + city_w
-            elif 2/3 <= comma_prop <= 1:
-                add_str = town_w + [","] + district_w + [","] + city_w
-
-            pos_tag = postagging(" ".join(add_str))
-            regex_tag = (add_str, [regex.run(w) for w in add_str])
+        for add_str in [add_str_1, add_str_2, add_str_3, add_str_4]:
+            pre_result = preprocessor.annotate(add_str)['sentences'][0]
+            words = [w['form'] for w in pre_result]
+            pos_tags = [w['posTag'] for w in pre_result]
+            regexes = [regex.run(w) for w in words]
             labels = []
-
-            for i, w in enumerate(pos_tag[1]):
-                if i == 0:
+            for idx_w, w in enumerate(words):
+                if idx_w == 0:
                     labels.append("B-LOC")
                 else:
                     labels.append("I-LOC")
 
-            print(pos_tag)
-            print(regex_tag)
-            print(labels)
+            for idx_w, w in enumerate(words):
+                line = "\t".join([w, pos_tags[idx_w], regexes[idx_w], labels[idx_w]])
+                location_data.append(line)
 
-            words = pos_tag[0]
-            pos_tag = pos_tag[1]
-            regex_tag = regex_tag[1]
-
-            location_data.append("\n".join(["\t".join([words[i], pos_tag[i], regex_tag[i], labels[i]])
-                                            for i, _ in enumerate(labels)]))
-            location_data.append("\n")
-
-        except IndexError:
-            count_exception += 1
-            continue
-
-    print(count_exception)
+            location_data.append("")
 
     with open("location_data.txt", "w") as fp:
         fp.write("\n".join(location_data))
@@ -217,15 +196,13 @@ def create_motor_data():
 if __name__ == '__main__':
     from random import shuffle
 
-    data_train = open("/home/trungtq/Documents/NER/vie-ner-lstm/python3_ver/Vietnamese_NER/data/newz/"
-                      "normalized_data/train_sample.txt").read().split("\n\n")
-    data_motor = open("/home/trungtq/Documents/NER/data/motor_data.txt").read().split("\n\n")
+    root_data_train = open("/home/trungtq/Documents/NER/data/root/train_sample.txt").read().split("\n\n")
+    location_data_train = open("/home/trungtq/Documents/NER/data/location_data.txt").read().split("\n\n")
+    motor_data_train = open("/home/trungtq/Documents/NER/data/motor_data.txt").read().split("\n\n")
 
-    data = data_train + data_motor
-    shuffle(data)
+    data_train = root_data_train + location_data_train + motor_data_train
+    shuffle(data_train)
 
     with open("train_sample.txt", "w") as fp:
-        fp.write("\n\n".join(data))
+        fp.write("\n\n".join(data_train))
         fp.close()
-
-
