@@ -26,7 +26,7 @@ map_table = {'tỷ':1e9,
 
 map_table_2 = {}
 
-stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'5',
+stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'5', 'lăm':'5',
             'sáu':'6', 'bảy':'7', 'bẩy':'7', 'tám':'8', 'chín':'9'}
 
 
@@ -164,5 +164,5 @@ def stoi(str_val):
 
 if __name__ == '__main__':
     # s = '500    k 2tr'
-    s = 'tôi muốn vay 1 tỷ 4 trăm mười năm triệu'
+    s = 'tôi muốn vay hai mươi tỷ 4 trăm mười lăm triệu'
     print(parse(s))
