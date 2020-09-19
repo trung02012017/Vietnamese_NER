@@ -111,7 +111,7 @@ def stoi(str_val):
         unit = 0; value = 0; number = 0; previous_unit = None; temp = 0; flag = False
         for w in words:
             try:
-                if number != 0 and (flag or value == 0):
+                if number != 0 and (flag or value == 0 or value >= 1e9):
                     temp = float(w)
                 else:
                     number = float(w)
@@ -164,5 +164,5 @@ def stoi(str_val):
 
 if __name__ == '__main__':
     # s = '500    k 2tr'
-    s = 'tôi muốn vay 4 trăm mười năm triệu'
+    s = 'tôi muốn vay 1 tỷ 4 trăm mười năm triệu'
     print(parse(s))
