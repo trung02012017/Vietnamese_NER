@@ -2,6 +2,7 @@ import re
 
 
 normalize_space = re.compile(r' +')
+normalize_space_2 = re.compile(r'(?P<number1>[\d]) +(?P<number2>[\d])')
 
 detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|lít|củ|tỷ|tr|t|k)'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
@@ -25,14 +26,15 @@ map_table = {'tỷ':1e9,
 
 map_table_2 = {}
 
-stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'5', 'sáu':'6',
-            'bảy':'7', 'bẩy':'7', 'tám':'8', 'chín':'9', 'mười':'10'}
+stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'5',
+            'sáu':'6', 'bảy':'7', 'bẩy':'7', 'tám':'8', 'chín':'9'}
 
 
 def parse(s):
     global detect_money
     ss = s.strip().lower().replace(',', '')
     ss = stoi_ex(ss)
+    ss = normalize_space_2.sub('\g<number1>\g<number2>', ss)
     for obj in detect_money:
         v = get_value(obj, ss)
         if v[1] is not None:
@@ -49,6 +51,7 @@ def get_value(reobj, ss):
             break
 
         value = stoi(value_str)
+        value_str = value_str.replace('1 mươi', 'mười')
         return [value_str, value]
     except:
         return [None, None]
@@ -60,8 +63,11 @@ def stoi_ex(raw):
     new_words = []
     for w in words:
         try:
-            ww = stoi_map[w]
-            new_words.append(ww)
+            if w == 'mười':
+                new_words.append('1 mươi')
+            else:
+                ww = stoi_map[w]
+                new_words.append(ww)
         except:
             new_words.append(w)
     return ' '.join(new_words)
@@ -158,5 +164,5 @@ def stoi(str_val):
 
 if __name__ == '__main__':
     # s = '500    k 2tr'
-    s = 'tôi muốn vay 4 trăm 2 mươi năm triệu'
+    s = 'tôi muốn vay 4 trăm mười năm triệu'
     print(parse(s))
