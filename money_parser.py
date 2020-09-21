@@ -15,9 +15,6 @@ re_detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|
 re_detect_money_2 = re.compile(r'\d{7,9}')
 re_detect_money_3 = re.compile(r'\d{3,6} *\$')
 
-re_normalize_result_str = re.compile(r'(chai|củ)')
-re_normalize_result_str_2 = re.compile(r'(cành|lít)')
-
 detect_money = [re_detect_money_1, re_detect_money_2, re_detect_money_3]
 
 map_table = {'tỷ':1e9,
@@ -31,6 +28,8 @@ map_table_2 = {}
 
 stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'5', 'lăm':'5',
             'sáu':'6', 'bảy':'7', 'bẩy':'7', 'tám':'8', 'chín':'9'}
+itos_map = {'1':'một', '2':'hai', '3':'ba', '4':'bốn', '5':'năm',
+            '6':'sáu', '7':'bảy', '8':'tám', '9':'chín'}
 
 
 def parse(s):
@@ -50,19 +49,22 @@ def parse(s):
 
 def get_value(reobj, ss):
     try:
-        value_str = None
+        value_str_raw = None
         finditer = reobj.finditer(ss)
         for m in finditer:
             x = m.regs[0]
-            value_str = re_normalize_space.sub(' ', ss[x[0]:x[1]])
+            value_str_raw = re_normalize_space.sub(' ', ss[x[0]:x[1]])
             break
 
-        value = stoi(value_str)
-        value_str = value_str.replace('1 mươi', 'mười')
+        value = stoi(value_str_raw)
+        value_str_raw = value_str_raw.replace('1 mươi', 'mười')
         formatted_value = "{:,}".format(value)
-        return [value_str, value, formatted_value]
+
+        normalized_value_str = itos(formatted_value)
+
+        return [value_str_raw, value, formatted_value, normalized_value_str]
     except:
-        return [None, None, None]
+        return [None, None, None, None]
 
 
 def stoi_ex(raw):
@@ -158,6 +160,8 @@ def stoi(str_val):
         try:
             if previous_unit is not None and words[-1] == 'trăm':
                 value += number * previous_unit / 1e3
+            elif previous_unit == 1e3:
+                value += number
             else:
                 _ = float(words[-1])
                 value += number * unit / 10
@@ -168,14 +172,81 @@ def stoi(str_val):
         return None
 
 
-def normalize_result_str(s):
-    global re_normalize_result_str, re_normalize_result_str_2
-    ss = re_normalize_result_str.sub('triệu', s)
-    ss = re_normalize_result_str_2.sub('trăm nghìn')
+def itos(s):
+    try:
+        result = []
+        parts = s.split(',')[::-1]
+        if len(parts) > 4:
+            return None
+        for i, p in enumerate(parts):
+            if p == '000':
+                continue
+            s = itos_ex(p)
+            if s is None:
+                return None
+            if i == 0:
+                s += ' đồng'
+            elif i == 1:
+                s += ' nghìn'
+            elif i == 2:
+                s += ' triệu'
+            elif i == 3:
+                s += ' tỷ'
+            result.append(s)
+        return ' '.join(result[::-1])
+    except:
+        return None
+
+
+def itos_ex(s):
+    global itos_map
+    result = []
+    try:
+        v = int(s)
+        if v >= 100:
+            result.append(itos_map[s[0]] + ' ' + 'trăm')
+
+            if s[1] == '0':
+                if s[2] != '0':
+                    result.append('linh')
+                else: pass
+            elif s[1] == '1':
+                result.append('mười')
+            else:
+                result.append(itos_map[s[1]] + ' ' + 'mươi')
+
+            if s[2] == '0':
+                pass
+            elif s[1] == '0' and s[2] == '1':
+                result.append('một')
+            elif s[1] != '0' and s[2] == '1':
+                result.append('mốt')
+            else:
+                result.append(itos_map[s[2]])
+        elif v >= 10:
+            if s[1] == 1:
+                result.append('mười')
+            else:
+                result.append(itos_map[s[1]] + ' ' + 'mươi')
+
+            if s[2] == '0':
+                pass
+            elif s[1] == '0' and s[2] == '1':
+                result.append('một')
+            elif s[1] != '0' and s[2] == '1':
+                result.append('mốt')
+            else:
+                result.append(itos_map[s[2]])
+        else:
+            result.append(itos_map[s[2]])
+        return ' '.join(result)
+    except:
+        return None
+
 
 
 
 if __name__ == '__main__':
     # s = '1tr2'
-    s = 'tôi muốn vay 20 cành'
+    s = 'tôi muốn vay 321k101'
     print(parse(s))

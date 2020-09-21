@@ -65,24 +65,28 @@ def parse_money():
             if result[1] is None:
                 return jsonify({'result': {'text': None,
                                            'number': None,
-                                           'formatted_currence': None},
+                                           'formatted_currence': None,
+                                           'text_currence': None},
                                 'status_code': 1,
                                 'message': 'cannot parse money from input'})
             return jsonify({'result': {'text': result[0],
                                        'number': result[1],
-                                       'formatted_currence': result[2]},
+                                       'formatted_currence': result[2],
+                                       'text_currence': result[3]},
                             'status_code': 0,
                             'message': 'success'})
         except:
             return jsonify({'result': {'text': None,
                                        'number': None,
-                                       'formatted_currence': None},
+                                       'formatted_currence': None,
+                                       'text_currence': None},
                             'status_code': 2,
                             'message': 'internal error'})
     except:
         return jsonify({'result': {'text': None,
                                    'number': None,
-                                   'formatted_currence': None},
+                                   'formatted_currence': None,
+                                   'text_currence': None},
                         'status_code': 3,
                         'message': 'bad request'})
 
