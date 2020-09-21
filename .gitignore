@@ -140,3 +140,6 @@ data/vectors.npy
 .idea/*
 VnCoreNLP/*
 logs/*
+data/vectors.npy
+temp_app.py
+temp_model/*
