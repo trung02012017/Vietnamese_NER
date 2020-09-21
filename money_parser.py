@@ -203,6 +203,10 @@ def itos_ex(s):
     result = []
     try:
         v = int(s)
+        if len(s) == 1:
+            s = '00' + s
+        elif len(s) == 2:
+            s = '0' + s
         if v >= 100:
             result.append(itos_map[s[0]] + ' ' + 'trăm')
 
@@ -248,5 +252,5 @@ def itos_ex(s):
 
 if __name__ == '__main__':
     # s = '1tr2'
-    s = 'tôi muốn vay 321k101'
+    s = 'Em có thể vay hai trăm năm mươi lít đc không'
     print(parse(s))
