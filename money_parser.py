@@ -4,13 +4,13 @@ import re
 re_normalize_space = re.compile(r' +')
 re_normalize_space_2 = re.compile(r'(?P<number1>[\d]) +(?P<number2>[\d])')
 
-re_detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|lít|củ|tỷ|tr|t|k)'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
-                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*',
+re_detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|loét|lít|củ|tỷ|tr|t|k)'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|loét|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|loét|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|loét|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|loét|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|loét|lít|củ|tỷ|tr|t|k)*'
+                            r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|loét|lít|củ|tỷ|tr|t|k)*',
                                flags=re.IGNORECASE)
 re_detect_money_2 = re.compile(r'\d{7,9}')
 re_detect_money_3 = re.compile(r'\d{3,6} *\$')
@@ -19,7 +19,7 @@ detect_money = [re_detect_money_1, re_detect_money_2, re_detect_money_3]
 
 map_table = {'tỷ':1e9,
              'triệu':1e6, 'tr':1e6, 't':1e6, 'trieu':1e6,
-             'củ':1e6, 'cành':1e5, 'chai':1e6, 'lít':1e5,
+             'củ':1e6, 'cành':1e5, 'chai':1e6, 'lít':1e5, 'loét':1e5,
              'k':1e3, 'nghìn':1e3, 'ngìn':1e3, 'ngàn':1e3,
              'trăm':1e2, 'mươi':10, 'chục':10, '.':0.1,
              '$': 23000}
