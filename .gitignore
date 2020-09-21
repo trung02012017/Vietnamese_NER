@@ -141,3 +141,4 @@ model/data/vectors.npy
 VnCoreNLP/*
 data/vectors.npy
 logs/*
+run_api.sh
