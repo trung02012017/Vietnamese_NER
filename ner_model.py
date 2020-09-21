@@ -2,6 +2,8 @@
 import unicodedata
 import os
 import json
+import requests
+import ast
 
 import numpy as np
 import tensorflow as tf
@@ -70,8 +72,8 @@ class NameEntityRecognition:
         for i, sen in enumerate(sentences):
             sen_result = [(w['form'], w['nerLabel']) for w in sen]
             word_raw = [w['form'] for w in sen]
-            pos_tag = [w['posTag'] for w in sen]
-            # pos_tag = [ViPosTagger.postagging(w['form'])[1][0] for w in sen]
+            # pos_tag = [w['posTag'] for w in sen]
+            pos_tag = [ViPosTagger.postagging(w['form'])[1][0] for w in sen]
             print(pos_tag)
             words = list(map(lambda w: self.re.map_word_label(w), word_raw))
             chunks = list(map(lambda w: self.re.run_ex(w), words))
@@ -205,11 +207,6 @@ class NameEntityRecognition:
         return new_per
 
     def load_model(self, model_path):
-        # print('loading %s ...' % (model_path))
-        # if os.path.isdir(model_path):
-        #     self.model = tf.keras.models.load_model(model_path)
-        # else:
-        #     self.model = None
 
         try:
             model_structure_path = join(model_path, "model_structure.json")
@@ -223,19 +220,3 @@ class NameEntityRecognition:
             self.model.load_weights(model_weights_path)
         except:
             print("Load model fail")
-
-
-if __name__ == '__main__':
-    from os.path import join, dirname, abspath
-
-    root_dir = abspath(dirname(__file__))
-    ner_model_path = join(root_dir, "model/ner_model")
-    words_path = join(root_dir, "model/data/words.pl")
-    embed_words_path = join(root_dir, "model/data/vectors.npy")
-    tag_path = join(root_dir, "model/data/tag_data.pkl")
-    data_path = join(root_dir, "model/data")
-
-    params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
-    ner = NameEntityRecognition(*params)
-
-    print(ner.predict(u'quận 1 hcm', json_format=True))
