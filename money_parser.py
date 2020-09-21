@@ -157,6 +157,7 @@ def stoi(str_val):
                     number *= unit
                     value += number
                     number = 0
+                    temp = 0
         try:
             if previous_unit is not None and words[-1] == 'trăm':
                 value += number * previous_unit / 1e3
@@ -252,5 +253,5 @@ def itos_ex(s):
 
 if __name__ == '__main__':
     # s = '1tr2'
-    s = 'Em có thể vay hai trăm năm mươi lít đc không'
+    s = 'Em có thể vay 5 trăm hai mươi lăm nghìn 2 trăm năm mươi đồng'
     print(parse(s))
