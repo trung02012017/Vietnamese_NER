@@ -59,7 +59,7 @@ class Regex:
             '<loc_prefix>': ['sông', 'núi', 'chợ', 'châ', 'đảo', 'đèo', 'cầ',
                              'đồi', 'đồn', 'thủ_đô', 'khách_sạn', 'sân_bay', 'nhà_hàng',
                              'cảng', 'đường', 'phố', 'đại_lộ', 'chung_cư', 'rạch',
-                             'hồ', 'kênh', 'bảo_tàng', 'cao_tốc', 'ở', 'tại'],
+                             'hồ', 'kênh', 'bảo_tàng', 'cao_tốc'],
 
             '<road>': ['tỉnh_lộ', 'quốc_lộ'],
 
