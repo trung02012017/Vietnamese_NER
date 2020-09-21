@@ -142,3 +142,5 @@ VnCoreNLP/*
 data/vectors.npy
 logs/*
 *.sh
+temp_model/*
+temp_app.py
