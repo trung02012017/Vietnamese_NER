@@ -1,21 +1,24 @@
 import re
 
 
-normalize_space = re.compile(r' +')
-normalize_space_2 = re.compile(r'(?P<number1>[\d]) +(?P<number2>[\d])')
+re_normalize_space = re.compile(r' +')
+re_normalize_space_2 = re.compile(r'(?P<number1>[\d]) +(?P<number2>[\d])')
 
-detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|lít|củ|tỷ|tr|t|k)'
+re_detect_money_1 = re.compile(r'\d+(\.\d+)* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|lít|củ|tỷ|tr|t|k)'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*'
                             r' *\d* *(triệu|trieu|trăm|nghìn|ngìn|ngàn|mươi|cành|chai|chục|rưỡi|lít|củ|tỷ|tr|t|k)*',
-                            flags=re.IGNORECASE)
-detect_money_2 = re.compile(r'\d{7,9}')
-detect_money_3 = re.compile(r'\d{3,6} *\$')
+                               flags=re.IGNORECASE)
+re_detect_money_2 = re.compile(r'\d{7,9}')
+re_detect_money_3 = re.compile(r'\d{3,6} *\$')
 
-detect_money = [detect_money_1, detect_money_2, detect_money_3]
+re_normalize_result_str = re.compile(r'(chai|củ)')
+re_normalize_result_str_2 = re.compile(r'(cành|lít)')
+
+detect_money = [re_detect_money_1, re_detect_money_2, re_detect_money_3]
 
 map_table = {'tỷ':1e9,
              'triệu':1e6, 'tr':1e6, 't':1e6, 'trieu':1e6,
@@ -32,13 +35,17 @@ stoi_map = {'một':'1', 'mốt':'1', 'hai':'2', 'ba':'3', 'bốn':'4', 'năm':'
 
 def parse(s):
     global detect_money
-    ss = s.strip().lower().replace(',', '')
-    ss = stoi_ex(ss)
-    ss = normalize_space_2.sub('\g<number1>\g<number2>', ss)
-    for obj in detect_money:
-        v = get_value(obj, ss)
-        if v[1] is not None:
-            return v
+    try:
+        ss = s.strip().lower().replace(',', '')
+        ss = stoi_ex(ss)
+        ss = re_normalize_space_2.sub('\g<number1>\g<number2>', ss)
+        for obj in detect_money:
+            v = get_value(obj, ss)
+            if v[1] is not None:
+                break
+        return v
+    except:
+        return [None, None, None]
 
 
 def get_value(reobj, ss):
@@ -47,14 +54,15 @@ def get_value(reobj, ss):
         finditer = reobj.finditer(ss)
         for m in finditer:
             x = m.regs[0]
-            value_str = normalize_space.sub(' ', ss[x[0]:x[1]])
+            value_str = re_normalize_space.sub(' ', ss[x[0]:x[1]])
             break
 
         value = stoi(value_str)
         value_str = value_str.replace('1 mươi', 'mười')
-        return [value_str, value]
+        formatted_value = "{:,}".format(value)
+        return [value_str, value, formatted_value]
     except:
-        return [None, None]
+        return [None, None, None]
 
 
 def stoi_ex(raw):
@@ -106,7 +114,7 @@ def stoi(str_val):
     global map_table
     try:
         new_str = normalize_value(str_val)
-        new_str = normalize_space.sub(' ', new_str)
+        new_str = re_normalize_space.sub(' ', new_str)
         words = new_str.strip().split()
         unit = 0; value = 0; number = 0; previous_unit = None; temp = 0; flag = False
         for w in words:
@@ -160,9 +168,14 @@ def stoi(str_val):
         return None
 
 
+def normalize_result_str(s):
+    global re_normalize_result_str, re_normalize_result_str_2
+    ss = re_normalize_result_str.sub('triệu', s)
+    ss = re_normalize_result_str_2.sub('trăm nghìn')
+
 
 
 if __name__ == '__main__':
-    # s = '500    k 2tr'
-    s = 'tôi muốn vay hai mươi tỷ 4 trăm mười lăm triệu'
+    # s = '1tr2'
+    s = 'tôi muốn vay 20 cành'
     print(parse(s))
