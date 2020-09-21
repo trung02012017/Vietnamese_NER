@@ -1,2 +1,2 @@
 #!/bin/bash
-uwsgi --ini ner.ini
+/home/trungtq/miniconda3/envs/ner_api/bin/uwsgi --ini ner.ini
