@@ -6,7 +6,6 @@ from flask import Flask, jsonify, request, Response
 
 import json
 
-app = Flask(__name__)
 
 root_dir = abspath(dirname(__file__))
 ner_model_path = join(root_dir, "model/ner_model")
@@ -17,6 +16,9 @@ data_path = join(root_dir, "model/data")
 
 params = [ner_model_path, words_path, embed_words_path, tag_path, data_path]
 ner = NameEntityRecognition(*params)
+
+
+app = Flask(__name__)
 
 
 @app.route('/name_entity', methods=['GET', 'POST'])
