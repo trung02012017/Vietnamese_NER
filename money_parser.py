@@ -35,7 +35,7 @@ itos_map = {'1':'một', '2':'hai', '3':'ba', '4':'bốn', '5':'năm',
 def parse(s):
     global detect_money
     try:
-        ss = s.strip().lower().replace(',', '')
+        ss = s.strip().lower().replace(',', '.')
         ss = stoi_ex(ss)
         ss = re_normalize_space_2.sub('\g<number1>\g<number2>', ss)
         for obj in detect_money:
@@ -252,6 +252,6 @@ def itos_ex(s):
 
 
 if __name__ == '__main__':
-    # s = '1tr2'
-    s = 'Em có thể vay 5 trăm hai mươi lăm nghìn 2 trăm năm mươi đồng'
+    s = '3,56tr'
+    # s = 'Em có thể vay 5 trăm hai mươi lăm nghìn 2 trăm năm mươi đồng'
     print(parse(s))
