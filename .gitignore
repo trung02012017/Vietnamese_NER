@@ -139,7 +139,7 @@ cython_debug/
 
 model/data/vectors.npy
 VnCoreNLP/*
-data/vectors.npy
+*/vectors.npy
 logs/*
 *.sh
 temp_model/*
