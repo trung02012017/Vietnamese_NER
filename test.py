@@ -74,7 +74,11 @@ def create_location_data():
             town = " ".join([row['Tên'].split()[0].lower()] + row['Tên'].split()[1:])
         else:
             town = row['Tên']
-        district = " ".join([row['Quận Huyện'].split()[0].lower()] + row['Quận Huyện'].split()[1:])
+
+        if not row['Quận Huyện'].split()[1].isdigit():
+            district = " ".join([row['Quận Huyện'].split()[0].lower()] + row['Quận Huyện'].split()[1:])
+        else:
+            district = row['Quận Huyện']
         city = " ".join([row['Tỉnh / Thành Phố'].split()[0].lower()] + row['Tỉnh / Thành Phố'].split()[1:])
 
         prefix_town = ["xã", "phường", "thị trấn"]
@@ -82,15 +86,16 @@ def create_location_data():
         prefix_city = ["tỉnh", "thành phố"]
 
         params = [town, district, city, prefix_town, prefix_district, prefix_city]
-        add_str_1 = create_location_sentence(True, True, *params)
-        add_str_2 = create_location_sentence(True, False, *params)
+        # add_str_1 = create_location_sentence(True, True, *params)
+        # add_str_2 = create_location_sentence(True, False, *params)
         add_str_3 = create_location_sentence(False, True, *params)
         add_str_4 = create_location_sentence(False, False, *params)
 
-        for add_str in [add_str_1, add_str_2, add_str_3, add_str_4]:
+        # for add_str in [add_str_1, add_str_2, add_str_3, add_str_4]:
+        for add_str in [add_str_3, add_str_4]:
             pre_result = preprocessor.annotate(add_str)['sentences'][0]
             words = [w['form'] for w in pre_result]
-            pos_tags = [w['posTag'] for w in pre_result]
+            pos_tags = postagging(" ".join(words))[1]
             regexes = [regex.run(w) for w in words]
             labels = []
             for idx_w, w in enumerate(words):
@@ -147,7 +152,7 @@ def create_motor_data():
             words_1 = [w['form'] for w in sen[0]]
             words_2 = [w['form'].upper() for w in sen[0]]
             words_3 = [w['form'].title() for w in sen[0]]
-            pos_tags = [w['posTag'] for w in sen[0]]
+            pos_tags = postagging(" ".join([w['form'] for w in sen[0]]))[1]
             regexes = [regex.run(w) for w in words_1]
 
             for w_idx, word in enumerate(words_1):
@@ -200,7 +205,7 @@ if __name__ == '__main__':
     location_data_train = open("/home/trungtq/Documents/NER/data/location_data.txt").read().split("\n\n")
     motor_data_train = open("/home/trungtq/Documents/NER/data/motor_data.txt").read().split("\n\n")
 
-    data_train = root_data_train + motor_data_train
+    data_train = root_data_train + location_data_train + motor_data_train
     shuffle(data_train)
 
     with open("train_sample.txt", "w") as fp:
