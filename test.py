@@ -86,13 +86,13 @@ def create_location_data():
         prefix_city = ["tỉnh", "thành phố"]
 
         params = [town, district, city, prefix_town, prefix_district, prefix_city]
-        # add_str_1 = create_location_sentence(True, True, *params)
+        add_str_1 = create_location_sentence(True, True, *params)
         # add_str_2 = create_location_sentence(True, False, *params)
         add_str_3 = create_location_sentence(False, True, *params)
-        add_str_4 = create_location_sentence(False, False, *params)
+        # add_str_4 = create_location_sentence(False, False, *params)
 
         # for add_str in [add_str_1, add_str_2, add_str_3, add_str_4]:
-        for add_str in [add_str_3, add_str_4]:
+        for add_str in [add_str_1, add_str_3]:
             pre_result = preprocessor.annotate(add_str)['sentences'][0]
             words = [w['form'] for w in pre_result]
             pos_tags = postagging(" ".join(words))[1]
@@ -199,7 +199,6 @@ def create_motor_data():
 
 
 if __name__ == '__main__':
-    from random import shuffle
 
     root_data_train = open("/home/trungtq/Documents/NER/data/root/train_sample.txt").read().split("\n\n")
     location_data_train = open("/home/trungtq/Documents/NER/data/location_data.txt").read().split("\n\n")
@@ -210,3 +209,5 @@ if __name__ == '__main__':
     with open("train_sample.txt", "w") as fp:
         fp.write("\n\n".join(data_train))
         fp.close()
+
+    # create_location_data()
