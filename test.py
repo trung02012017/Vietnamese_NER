@@ -205,7 +205,7 @@ if __name__ == '__main__':
     location_data_train = open("/home/trungtq/Documents/NER/data/location_data.txt").read().split("\n\n")
     motor_data_train = open("/home/trungtq/Documents/NER/data/motor_data.txt").read().split("\n\n")
 
-    data_train = root_data_train + motor_data_train + location_data_train
+    data_train = root_data_train + location_data_train
 
     with open("train_sample.txt", "w") as fp:
         fp.write("\n\n".join(data_train))
