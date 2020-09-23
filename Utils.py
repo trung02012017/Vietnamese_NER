@@ -286,12 +286,14 @@ class Utils:
             return None
 
     def predict_to_file(self, predicts, tests, alphabet_tag, output_file):
+        print(alphabet_tag.instance2index)
         with codecs.open(output_file, 'w', 'utf-8') as f:
             for i in range(len(tests)):
                 for j in range(len(tests[i])):
                     predict = alphabet_tag.get_instance(predicts[i][j])
                     if predict == None:
                         predict = alphabet_tag.get_instance(predicts[i][j] + 1)
+
                     test = alphabet_tag.get_instance(tests[i][j])
                     f.write('_' + ' ' + predict + ' ' + test + '\n')
                 f.write('\n')

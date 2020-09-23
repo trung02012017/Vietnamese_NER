@@ -201,11 +201,11 @@ def create_motor_data():
 if __name__ == '__main__':
     from random import shuffle
 
-    root_data_train = open("/home/trungtq/Documents/NER/data/root/train_sample.txt").read().split("\n\n")
+    root_data_train = open("/home/trungtq/Downloads/Telegram Desktop/normalize_data/train_sample.txt").read().split("\n\n")
     location_data_train = open("/home/trungtq/Documents/NER/data/location_data.txt").read().split("\n\n")
     motor_data_train = open("/home/trungtq/Documents/NER/data/motor_data.txt").read().split("\n\n")
 
-    data_train = root_data_train + location_data_train + motor_data_train
+    data_train = root_data_train + motor_data_train
     shuffle(data_train)
 
     with open("train_sample.txt", "w") as fp:

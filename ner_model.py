@@ -159,23 +159,39 @@ class NameEntityRecognition:
         print(endTime - startTime)
 
         print("Start testing")
-        x_test, y_test = get_test_data(test_data, utils=self.utils)
-        test_loss, test_acc = self.model.evaluate(x_test, y_test)
-        print(f"Result on test data: test loss {test_loss}, test_accuracy {test_acc}")
+        self.predict_test(test_data)
+
+    def predict_test(self, test_data):
+        print('Testing model...')
+        input_test, _ = get_test_data(test_data, self.utils)
+        answer = self.model.predict_classes(input_test, batch_size=batch_size)
+        self.utils.predict_to_file(answer, test_data[-1], self.utils.alphabet_tag, 'out.txt')
+        # evaluation model
+        input = open('out.txt')
+        p1 = subprocess.Popen(shlex.split("perl conlleval.pl"), stdin=input)
+        p1.wait()
 
     def save_model(self, model_path):
-        # print('loading %s ...' % (model_path))
-        # if os.path.isdir(model_path):
-        #     self.model = tf.keras.models.load_model(model_path)
-        # else:
-        #     self.model = None
-
         json_model = self.model.to_json()
 
         with open(join(model_path, "model_structure.json"), "w") as fp:
             fp.write(json_model)
 
         self.model.save_weights(join(model_path, "model_weights.h5"))
+
+    def load_model(self, model_path):
+        try:
+            model_structure_path = join(model_path, "model_structure.json")
+            model_weights_path = join(model_path, "model_weights.h5")
+
+            with open(model_structure_path, "r") as fp:
+                json_model = fp.read()
+                fp.close()
+
+            self.model = tf.keras.models.model_from_json(json_model)
+            self.model.load_weights(model_weights_path)
+        except:
+            print("Load model fail")
 
 
 if __name__ == '__main__':
@@ -192,9 +208,11 @@ if __name__ == '__main__':
     # test_dir = join(dirname(abspath(__file__)), "data/small_data/test_sample.txt")
     num_lstm_layer = 2
     num_hidden_node = 128
-    dropout = 0.2
+    dropout = 0.5
     batch_size = 64
     patience = 3
 
     n = NameEntityRecognition()
     n.build_model(num_lstm_layer, num_hidden_node, dropout, batch_size, patience)
+    # n.load_model("model/ner_model")
+    # n.predict_test()
