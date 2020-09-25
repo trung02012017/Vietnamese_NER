@@ -64,7 +64,7 @@ def choose_extra(choose_list, str_):
         return max(choose_list, key=len)
 
 
-def detect_brand_and_model(str_, data):
+def detect_brand_and_model(str_, data, message):
     motor_brand_data = data[0]
     motor_b_model_data = data[1]
     motor_i_model_data = data[2]
@@ -93,8 +93,9 @@ def detect_brand_and_model(str_, data):
             if len(satisfied_i_models) > 0:  # got brand, b_model and i_model
                 i_model = choose_extra(satisfied_i_models, str_)
             else:  # got brand, b_model but no i_model
-                pass
+                message.append("no i model")
         else:  # got brand and no b_model, i_model considered
+            message.append("no b model")
             i_model_list = []
             for k, v in motor_brand_data[motor_brand].items():
                 i_model_list += v
@@ -103,8 +104,9 @@ def detect_brand_and_model(str_, data):
                 i_model = choose_extra(satisfied_i_models, str_)
                 b_model = motor_i_model_data[i_model][b_model]
             else:
-                pass
+                message.append("no i model")
     else:  # no brand
+        message.append("no brand")
         b_model_list = list(motor_b_model_data.keys())
         satisfied_b_models = [m for m in detect_motor_b_model if m in b_model_list]
 
@@ -120,6 +122,7 @@ def detect_brand_and_model(str_, data):
                 pass
 
         else:  # no brand, no b_model, i_model considered
+            message.append("no b model")
             i_model_list = []
             for brand_, v_brand in motor_brand_data.items():
                 for b_model_, i_model_ in v_brand.items():
@@ -130,21 +133,22 @@ def detect_brand_and_model(str_, data):
                 motor_brand = motor_i_model_data[i_model]['brand']
                 b_model = motor_i_model_data[i_model]['b_model']
             else:  # no brand, no b_model and no i_model
-                pass
-    return motor_brand, b_model, i_model
+                message.append("no i model")
+    return motor_brand, b_model, i_model, message
 
 
-def detect_year_released(str_):
+def detect_year_released(str_, message):
     year_released = 0
     detect_year_released = re.findall(r'[1-2][0-9]{3}', str_)
 
     for y in detect_year_released:
         year_released = int(y)
         if 1900 <= year_released <= datetime.now().year:
-            break
+            return year_released, message
         else:
             pass
-    return year_released
+    message.append("no year")
+    return year_released, message
 
 
 def detect_i_model_bonus(str_, i_model, year_released):
@@ -184,9 +188,11 @@ def create_data_mapping(brand_mapping_path='motor_data.json'):
 
 
 def main_process_motor(str_):
+    str_ = str_.lower()
+    message = []
     mapping_data = create_data_mapping()
-    motor_brand, motor_b_model, motor_i_model = detect_brand_and_model(str_, mapping_data)
-    year_released = detect_year_released(str_)
+    motor_brand, motor_b_model, motor_i_model, message = detect_brand_and_model(str_, mapping_data, message)
+    year_released, message = detect_year_released(str_, message)
     motor_i_model_bonus = detect_i_model_bonus(str_, motor_i_model, year_released)
 
     result = {
@@ -194,7 +200,8 @@ def main_process_motor(str_):
         "motor_b_model": motor_b_model,
         "motor_i_model": motor_i_model,
         "year_released": year_released,
-        "motor_i_model_bonus": motor_i_model_bonus
+        "motor_i_model_bonus": motor_i_model_bonus,
+        "message": message
     }
 
     return result
