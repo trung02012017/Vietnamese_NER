@@ -29,9 +29,9 @@ def get_name_entity():
     try:
         if request.method == 'POST':
             data = request.get_json()
-            motor_str = data["data"]
+            sentences = data["paragraph"]
             try:
-                result = main_process_motor(motor_str)
+                result = ner.predict(sentences)
                 return {"result": result}
             except:
                 return Response(response='Service fail', status=500)
