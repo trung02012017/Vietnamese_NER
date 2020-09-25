@@ -1,6 +1,7 @@
 from os.path import join, dirname, abspath
 from ner_model import NameEntityRecognition
 from money_parser import parse
+from motor_parser import main_process_motor
 
 from flask import Flask, jsonify, request, Response
 
@@ -28,9 +29,9 @@ def get_name_entity():
     try:
         if request.method == 'POST':
             data = request.get_json()
-            sentences = data["paragraph"]
+            motor_str = data["data"]
             try:
-                result = ner.predict(sentences)
+                result = main_process_motor(motor_str)
                 return {"result": result}
             except:
                 return Response(response='Service fail', status=500)
@@ -49,6 +50,23 @@ def process_request_ex():
             result = ner.predict(data['data'], json_format=True)
             return jsonify(result)
         except:
+            return Response(response='Service fail', status=500)
+    except:
+        return Response(response='Bad request', status=400)
+
+
+@app.route('/parse_motor', methods=['POST'])
+def process_motor_str():
+    global ner
+    try:
+        data = request.data
+        data = json.loads(data)
+        print(u'Input:\n%s' % (data))
+        try:
+            result = main_process_motor(data['data'])
+            return jsonify(result)
+        except Exception as e:
+            print(e)
             return Response(response='Service fail', status=500)
     except:
         return Response(response='Bad request', status=400)
