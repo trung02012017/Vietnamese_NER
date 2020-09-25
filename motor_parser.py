@@ -199,6 +199,3 @@ def main_process_motor(str_):
 
     return result
 
-
-print(main_process_motor("like fi 2020"))
-
