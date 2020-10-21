@@ -44,7 +44,7 @@ def parse(s):
                 break
         return v
     except:
-        return [None, None, None]
+        return [None, None, None, None]
 
 
 def get_value(reobj, ss):
@@ -252,6 +252,6 @@ def itos_ex(s):
 
 
 if __name__ == '__main__':
-    s = '3,56tr'
+    s = 'VAY TỪ 10-20TR'
     # s = 'Em có thể vay 5 trăm hai mươi lăm nghìn 2 trăm năm mươi đồng'
     print(parse(s))

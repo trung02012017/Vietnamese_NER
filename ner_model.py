@@ -122,7 +122,7 @@ class NameEntityRecognition:
             for i, w in enumerate(sen):
                 if u'B-' in w[1]:
                     tag = w[1].split(u'-')[1]
-                    if B_not_end:
+                    if B_not_end and previous_tag is not None:
                         s.append(u'</' + tag + u'>')
                     s.append(u'<' + tag + u'>')
                     s.append(w[0])
